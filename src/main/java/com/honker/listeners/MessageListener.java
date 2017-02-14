@@ -42,33 +42,6 @@ public class MessageListener extends Operations implements IListener<MessageRece
                     sendHelp(chan);
                 else
                     sendCommandFailedLength(chan);
-//            } else if(cmd[0].equals("roll")){
-//                if(cmd.length == 2){
-//                    try{
-//                        int d = Integer.parseInt(cmd[1]);
-//                        if(d > 100)
-//                            sendCommandFailed(chan, "This number is too big");
-//                        else if(d < 2)
-//                            sendCommandFailed(chan, "This number is too small");
-//                        else
-//                            rollDice(chan, d);
-//                    } catch(Exception ex){
-//                        sendCommandFailed(chan, "Is this even a number?");
-//                        ex.printStackTrace();
-//                    }
-//                } else if(cmd.length == 1)
-//                    rollDice(chan, 6);
-//                else
-//                    sendCommandFailedLength(chan);
-//            } else if(cmd[0].equals("bugurt")){
-//                if(cmd.length == 1){
-//                    String bugurt = generateBugurt();
-//                    if(bugurt.equals(""))
-//                        sendCommandFailed(chan, "I don't know any words to write a bugurt with, send some messages so i can learn some!");
-//                    else
-//                        sendCommand(chan, "YOUR BUGURT:\n\n" + bugurt);
-//                } else
-//                    sendCommandFailedLength(chan);
             } else if(cmd[0].equals("track")){
                 if(cmd.length == 1){
                     if(!ready)

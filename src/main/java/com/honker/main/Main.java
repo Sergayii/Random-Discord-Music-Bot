@@ -17,8 +17,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import sx.blah.discord.api.events.EventSubscriber;
 import sx.blah.discord.handle.impl.events.ReadyEvent;
@@ -57,7 +55,6 @@ public class Main extends Operations{
         mainChannel = bot.client.getChannelByID(MAIN_CHANNEL_ID);
 
         playerManager = new DefaultAudioPlayerManager();
-//        AudioSourceManagers.registerRemoteSources(playerManager);
         AudioSourceManagers.registerLocalSource(playerManager);
         musicManager = new MusicManager(playerManager);
 
@@ -251,7 +248,7 @@ public class Main extends Operations{
             else if(setting.startsWith("MUSIC_PATH = "))
                 MUSIC_PATH = setting.replaceFirst("MUSIC_PATH = ", "");
             else
-                throw new NoSuchFieldException("No such setting");
+                throw new IllegalArgumentException("No such setting");
         }
 
         join();
