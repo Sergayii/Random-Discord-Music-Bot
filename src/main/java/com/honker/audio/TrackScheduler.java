@@ -4,6 +4,7 @@ import static com.honker.main.Main.VOICE_CHANNEL_ID;
 import static com.honker.main.Main.bot;
 import static com.honker.main.Main.mainChannel;
 import static com.honker.main.Main.music;
+import static com.honker.main.Main.musicManager;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.player.event.AudioEventAdapter;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
@@ -97,8 +98,8 @@ public class TrackScheduler extends AudioEventAdapter {
     
     public String getTrackName(AudioTrack track){
         if(track != null){
-            String[] indentifier = track.getInfo().identifier.split("/");
-            String fileName = indentifier[indentifier.length - 1];
+            String fileName = track.getIdentifier().split(File.separator.replace("\\", "\\\\"))
+                              [track.getIdentifier().split(File.separator.replace("\\", "\\\\")).length - 1];
             String songName = fileName.substring(0, fileName.length() - 4);
             return songName;
         }

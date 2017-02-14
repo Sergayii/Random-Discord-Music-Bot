@@ -62,6 +62,8 @@ public class Main extends Operations{
         guild.getAudioManager().setAudioProvider(musicManager.getAudioProvider());
 
         playMusic();
+        
+        ready = true;
     }
 
     public static void unloadMusic(){
@@ -74,7 +76,7 @@ public class Main extends Operations{
     public static void loadMusic(){
         List<String> filesToLoad;
         try {
-            filesToLoad = Files.list(new File(MUSIC_PATH).toPath()).filter(path->Files.isRegularFile(path)&&!music.contains(path.toFile())).map(path->path.toFile().getName()).collect(Collectors.toList());
+            filesToLoad = Files.list(new File(MUSIC_PATH).toPath()).filter(path->Files.isRegularFile(path)&&!music.contains(path.toFile())).map(path->path.toFile().toString()).collect(Collectors.toList());
         } catch (IOException ex) {
             ex.printStackTrace();
             filesToLoad = null;
@@ -82,9 +84,7 @@ public class Main extends Operations{
         
         if(filesToLoad != null){
             for(String fileName : filesToLoad)
-                load(MUSIC_PATH + "/" + fileName);
-
-            filesToLoad = null;
+                load(fileName);
 
             try {
                 Thread.sleep(10000);
@@ -95,7 +95,7 @@ public class Main extends Operations{
             ArrayList<File> loadedFiles = new ArrayList<File>();
 
             for(AudioTrack track : musicManager.scheduler.queue)
-                loadedFiles.add(new File(track.getIdentifier()));
+                loadedFiles.add(new File(filesToLoad.get(musicManager.scheduler.queue.indexOf(track))));
 
             music = loadedFiles;
 
@@ -133,8 +133,7 @@ public class Main extends Operations{
 
             musicManager.player.setVolume(100);
             musicManager.player.setPaused(false);
-
-            ready = true;
+            
             musicPaused = false;
         } catch (Exception ex) {
             ex.printStackTrace();
