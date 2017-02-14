@@ -1,7 +1,6 @@
 package com.honker.main;
 
 import com.honker.audio.MusicManager;
-import com.honker.gui.Window;
 import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
@@ -11,11 +10,16 @@ import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import sx.blah.discord.api.events.EventSubscriber;
 import sx.blah.discord.handle.impl.events.ReadyEvent;
 import sx.blah.discord.handle.impl.events.ReconnectSuccessEvent;
@@ -26,8 +30,8 @@ import sx.blah.discord.util.DiscordException;
 
 public class Main extends Operations{
 
-    public static final String COMMAND_SYMBOL = "!", MUSIC_PATH = "./Music";
-    public static String BOT_TOKEN, MAIN_CHANNEL_ID, VOICE_CHANNEL_ID, GUILD_ID;
+    public static final String COMMAND_SYMBOL = "!";
+    public static String BOT_TOKEN, MAIN_CHANNEL_ID, VOICE_CHANNEL_ID, GUILD_ID, MUSIC_PATH;
 
     public static boolean ready = false, musicPaused = true;
 
@@ -36,7 +40,6 @@ public class Main extends Operations{
     public static MusicManager musicManager;
     public static AudioPlayerManager playerManager;
 
-    public static Window root;
     public static UserVar[] users = new UserVar[1000];
     public static Bot bot;
 
@@ -54,7 +57,7 @@ public class Main extends Operations{
         mainChannel = bot.client.getChannelByID(MAIN_CHANNEL_ID);
 
         playerManager = new DefaultAudioPlayerManager();
-        AudioSourceManagers.registerRemoteSources(playerManager);
+//        AudioSourceManagers.registerRemoteSources(playerManager);
         AudioSourceManagers.registerLocalSource(playerManager);
         musicManager = new MusicManager(playerManager);
 
@@ -72,40 +75,41 @@ public class Main extends Operations{
     }
 
     public static void loadMusic(){
-        ArrayList<String> filesToLoad = new ArrayList<String>();
-        File[] files = new File(MUSIC_PATH).listFiles();
-
-        for(File file : files){
-            if(file.isFile() && !music.contains(file))
-                filesToLoad.add(file.getName());
-        }
-
-        for(String fileName : filesToLoad)
-            load(MUSIC_PATH + "/" + fileName);
-
-        filesToLoad = null;
-        files = null;
-
+        List<String> filesToLoad;
         try {
-            Thread.sleep(10000);
-        } catch (InterruptedException ex) {
+            filesToLoad = Files.list(new File(MUSIC_PATH).toPath()).filter(path->Files.isRegularFile(path)&&!music.contains(path.toFile())).map(path->path.toFile().getName()).collect(Collectors.toList());
+        } catch (IOException ex) {
             ex.printStackTrace();
+            filesToLoad = null;
         }
+        
+        if(filesToLoad != null){
+            for(String fileName : filesToLoad)
+                load(MUSIC_PATH + "/" + fileName);
 
-        ArrayList<File> loadedFiles = new ArrayList<File>();
+            filesToLoad = null;
 
-        for(AudioTrack track : musicManager.scheduler.queue)
-            loadedFiles.add(new File(track.getIdentifier()));
+            try {
+                Thread.sleep(10000);
+            } catch (InterruptedException ex) {
+                ex.printStackTrace();
+            }
 
-        music = loadedFiles;
+            ArrayList<File> loadedFiles = new ArrayList<File>();
 
-        HashSet<File> newMusic = new HashSet<File>(music);
-        music = new ArrayList<File>(newMusic);
+            for(AudioTrack track : musicManager.scheduler.queue)
+                loadedFiles.add(new File(track.getIdentifier()));
 
-        HashSet<AudioTrack> newQueue = new HashSet<AudioTrack>(musicManager.scheduler.queue);
-        musicManager.scheduler.queue = new ArrayList<AudioTrack>(newQueue);
+            music = loadedFiles;
 
-        musicManager.scheduler.shufflePlaylist();
+            HashSet<File> newMusic = new HashSet<File>(music);
+            music = new ArrayList<File>(newMusic);
+
+            HashSet<AudioTrack> newQueue = new HashSet<AudioTrack>(musicManager.scheduler.queue);
+            musicManager.scheduler.queue = new ArrayList<AudioTrack>(newQueue);
+
+            musicManager.scheduler.shufflePlaylist();
+        }
     }
 
     public static void reloadMusic(){
@@ -170,7 +174,8 @@ public class Main extends Operations{
     }
 
     public static void shutdown(){
-        root.dispose();
+        exit("I'm leaving to apply an update, goodbye!");
+        System.exit(0);
     }
 
     public static void restart() throws InterruptedException{
@@ -243,11 +248,11 @@ public class Main extends Operations{
                 VOICE_CHANNEL_ID = setting.replaceFirst("VOICE_CHANNEL_ID = ", "");
             else if(setting.startsWith("GUILD_ID = "))
                 GUILD_ID = setting.replaceFirst("GUILD_ID = ", "");
+            else if(setting.startsWith("MUSIC_PATH = "))
+                MUSIC_PATH = setting.replaceFirst("MUSIC_PATH = ", "");
             else
                 throw new NoSuchFieldException("No such setting");
         }
-
-        root = new Window();
 
         join();
     }

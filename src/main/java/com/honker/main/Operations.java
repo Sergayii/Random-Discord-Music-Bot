@@ -183,7 +183,7 @@ public abstract class Operations {
     
     public void sendTracksList(IChannel chan){
         try {
-            File file = new File("./musicList.txt");
+            File file = File.createTempFile("musicList", ".txt");
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file)));
             
             for(AudioTrack track : musicManager.scheduler.queue){

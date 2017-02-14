@@ -10,7 +10,6 @@ import static com.honker.main.Main.play;
 import static com.honker.main.Main.ready;
 import static com.honker.main.Main.reloadMusic;
 import static com.honker.main.Main.restart;
-import static com.honker.main.Main.root;
 import static com.honker.main.Main.shutdown;
 import static com.honker.main.Main.unloadMusic;
 import com.honker.main.Operations;
@@ -41,8 +40,6 @@ public class MessageListener extends Operations implements IListener<MessageRece
             if(cmd[0].equals("help")){
                 if(cmd.length == 1)
                     sendHelp(chan);
-                else if(cmd.length == 2 && cmd[1].equals("me"))
-                    sendCommand(chan, "No");
                 else
                     sendCommandFailedLength(chan);
 //            } else if(cmd[0].equals("roll")){
@@ -112,24 +109,33 @@ public class MessageListener extends Operations implements IListener<MessageRece
                         }
 
                         if(!answer.equals(""))
-                            if(answer.length() <= 2000)
+                            if(answer.length() <= 1900)
                                 sendMessage(chan, "This is what i've found:\n" + answer);
                             else{
-                                File file = new File("./searchResults.txt");
-                                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file)));
-
-                                try{
-                                    writer.write(answer.replace("```", ""));
-                                    writer.newLine();
-                                    writer.flush();
-                                } catch(IOException e){
+                                File file;
+                                try {
+                                    file = File.createTempFile("searchResults", ".txt");
+                                } catch (IOException ex) {
+                                    ex.printStackTrace();
                                     file = null;
                                 }
+                                
+                                if(file != null){
+                                    BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file)));
 
-                                if(file != null)
-                                    sendFile(chan, "There's just too much tracks, i'll send them in a file", file);
-                                else
-                                    sendMessage(chan, "Something broke, and i can't send the result");
+                                    try{
+                                        writer.write(answer.replace("```", ""));
+                                        writer.newLine();
+                                        writer.flush();
+                                    } catch(IOException e){
+                                        file = null;
+                                    }
+
+                                    if(file != null)
+                                        sendFile(chan, "There's just too much tracks, i'll send them in a file", file);
+                                    else
+                                        sendMessage(chan, "Something broke, and i can't send the result");
+                                }
                             }
                         else
                             sendMessage(chan, "I found nothing!");
@@ -151,7 +157,7 @@ public class MessageListener extends Operations implements IListener<MessageRece
                             if(!ready)
                                 sendCommandFailed(chan, "Main.ready == false");
                             else
-                                root.dispose();
+                                shutdown();
                         }
                     } else if(cmd[0].equals("music") && cmd.length == 2){
                         if(cmd[1].equals("resume")){

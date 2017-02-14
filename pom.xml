@@ -4,7 +4,6 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <!-- You should edit these to your case -->
     <groupId>Bot</groupId>
     <artifactId>Bot</artifactId>
     <version>0.1</version>
@@ -67,18 +66,11 @@
                             <transformers>
                                 <transformer
                                     implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>bootstrap.Main</mainClass>
+                                    <mainClass>com.honker.main.Main</mainClass>
                                 </transformer>
                             </transformers>
                             <filters>
                                 <filter>
-                                    <!--
-                                        Exclude files that sign a jar
-                                        (one or multiple of the dependencies).
-                                        One may not repack a signed jar without
-                                        this, or you will get a
-                                        SecurityException at program start.
-                                    -->
                                     <artifact>*:*</artifact>
                                     <excludes>
                                         <exclude>META-INF/*.SF</exclude>
