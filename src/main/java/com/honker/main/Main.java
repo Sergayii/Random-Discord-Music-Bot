@@ -76,7 +76,7 @@ public class Main extends Operations{
     public static void loadMusic(){
         List<String> filesToLoad;
         try {
-            filesToLoad = Files.list(new File(MUSIC_PATH).toPath()).filter(path->Files.isRegularFile(path)&&!music.contains(path.toFile())).map(path->path.toFile().toString()).collect(Collectors.toList());
+            filesToLoad = Files.walk(new File(MUSIC_PATH).toPath()).filter(path->Files.isRegularFile(path)&&!music.contains(path.toFile())).map(path->path.toFile().toString()).collect(Collectors.toList());
         } catch (IOException ex) {
             ex.printStackTrace();
             filesToLoad = null;
