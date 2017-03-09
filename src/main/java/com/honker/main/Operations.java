@@ -130,9 +130,17 @@ public abstract class Operations {
     }
     
     public static void sendProgress(IChannel chan) {
+        if(progress != null) {
+            try {
+                progress.delete();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+        
         IMessage msg;
-        try{
-            msg = chan.sendMessage("Track progress:");
+        try {
+            msg = chan.sendMessage(musicManager.scheduler.getTrackInfo(musicManager.scheduler.getCurrentTrack()) + "\n\nTrack progress:");
             progress = msg;
         } catch(Exception e){
             e.printStackTrace();

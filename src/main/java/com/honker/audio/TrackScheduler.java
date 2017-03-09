@@ -90,7 +90,6 @@ public class TrackScheduler extends AudioEventAdapter {
     public boolean play(AudioTrack track){
         boolean bool = playNoMessage(track);
         
-        sendCurrentPlayingTrack();
         sendProgress(mainChannel);
         
         return bool;
@@ -122,7 +121,7 @@ public class TrackScheduler extends AudioEventAdapter {
     
     public String getTrackInfo(AudioTrack track){
         String trackName = getTrackName(track);
-        return "```\nTrack name: " + trackName + System.lineSeparator() + "Duration: " + (track.getDuration() / 1000) + " seconds" + System.lineSeparator() + "ID: " + getTrackID(track.makeClone()) + "\n```";
+        return "Track name: " + trackName + System.lineSeparator() + "Duration: " + (track.getDuration() / 1000) + " seconds" + System.lineSeparator() + "ID: " + getTrackID(track.makeClone());
     }
     
     public int getTrackID(AudioTrack track){
@@ -141,7 +140,7 @@ public class TrackScheduler extends AudioEventAdapter {
     public void sendCurrentPlayingTrack(IChannel chan){
         try {
             if(getCurrentTrack() != null){
-                chan.sendMessage("Current track:\n" + getTrackInfo(currentTrack));
+                sendProgress(chan);
             } else
                 chan.sendMessage("No track is playing right now");
         } catch (Exception ex) {
@@ -243,7 +242,7 @@ public class TrackScheduler extends AudioEventAdapter {
             }
         }
         
-        String msg = "Track progress:\n";
+        String msg = getTrackInfo(getCurrentTrack()) + "\n\nTrack progress:\n";
         for(int a = 0; a < per; a++) {
             msg += "#";
         }
