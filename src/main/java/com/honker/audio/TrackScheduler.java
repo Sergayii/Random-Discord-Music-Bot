@@ -220,7 +220,7 @@ public class TrackScheduler extends AudioEventAdapter {
     }
     
     public void updateTrack() {
-        if(!ready || musicPaused || progress == null) {
+        if(!ready || musicPaused || progress == null || currentTrack == null) {
             return;
         }
         
