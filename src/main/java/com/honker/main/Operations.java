@@ -99,6 +99,7 @@ public abstract class Operations {
                     + "!track - sends current track name and ID\n"
                     + "!list - sends tracks list\n"
                     + "!search <sentence> - search for <sentence> in tracks list\n"
+                    + "!ping - sends \"pong\" if the bot is still alive\n"
                     + "```\n\n"
                     + "Admin commands:\n```\n"
                     + "!bot <command> [value] - used for controlling bot remotely\n"

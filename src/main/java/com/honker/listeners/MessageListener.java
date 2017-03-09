@@ -121,6 +121,10 @@ public class MessageListener implements IListener<MessageReceivedEvent> {
                     } else
                         sendCommandFailed(chan, "The music isn't even started yet!!!");
                 }
+            } else if(cmd[0].equals("ping")) {
+                if(cmd.length == 1) {
+                    sendMessage(chan, "Pong!");
+                }
             } else{
                 if(cmd[0].equals("bot")){
                     if(cmd[1].equals("restart")){
