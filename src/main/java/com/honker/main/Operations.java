@@ -17,12 +17,8 @@ import sx.blah.discord.handle.obj.IUser;
 public abstract class Operations {
     
     public String[] marks = new String[]{"!", "#", "$", "%", "^", "&", "*", "(", ")", "+", "=", "-", "<", ">", ",", ".", ":", ";", "@", "?", "\n"};
-
-//    private ArrayList<String> nouns = new ArrayList<String>();
-//    private ArrayList<String> verbs = new ArrayList<String>();
-//    private ArrayList<String> adjectives = new ArrayList<String>();
     
-    public void sendFile(IChannel chan, String message, File file){
+    public static void sendFile(IChannel chan, String message, File file){
         try{
             chan.sendFile(message, file);
         } catch(Exception e){
@@ -30,7 +26,7 @@ public abstract class Operations {
         }
     }
     
-    public void sendFile(IChannel chan,  File file){
+    public static void sendFile(IChannel chan,  File file){
         try{
             chan.sendFile(file);
         } catch(Exception e){
@@ -38,7 +34,7 @@ public abstract class Operations {
         }
     }
     
-    public void sendFile(IChannel chan, String message, String path){
+    public static void sendFile(IChannel chan, String message, String path){
         try{
             chan.sendFile(message, false, Operations.class.getResourceAsStream(path), "Image.png");
         } catch(Exception e){
@@ -46,7 +42,7 @@ public abstract class Operations {
         }
     }
     
-    public void sendFile(IChannel chan, String path){
+    public static void sendFile(IChannel chan, String path){
         try{
             chan.sendFile("", false, Operations.class.getResourceAsStream(path), "Image.png");
         } catch(Exception e){
@@ -54,35 +50,27 @@ public abstract class Operations {
         }
     }
     
-    public void sendMessage(IChannel chan, String msg){
+    public static void sendMessage(IChannel chan, String msg){
         try{
             chan.sendMessage(msg);
         } catch(Exception e){
             e.printStackTrace();
         }
     }
-
-    public void sendCommand(IChannel chan, String cmd){
-        sendMessage(chan, "[COMMAND] " + cmd);
+    
+    public static void sendCommandDone(IChannel chan){
+        sendMessage(chan, "Command done!");
     }
     
-    public void sendCommandDone(IChannel chan){
-        sendCommand(chan, "Done!");
+    public static void sendCommandInProgress(IChannel chan){
+        sendMessage(chan, "Command in progress");
     }
     
-    public void sendCommandInProgress(IChannel chan){
-        sendCommand(chan, "Command in progress");
+    public static void sendCommandFailed(IChannel chan, String cause){
+        sendMessage(chan, "Command failed: " + cause);
     }
     
-    public void sendCommandFailed(IChannel chan, String cause){
-        sendCommand(chan, "Command failed: " + cause);
-    }
-    
-    public void sendCommandFailedLength(IChannel chan){
-        sendCommandFailed(chan, "Don't play with arguments count!");
-    }
-    
-    public void sendTracksList(IChannel chan){
+    public static void sendTracksList(IChannel chan){
         try {
             File file = File.createTempFile("musicList", ".txt");
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file)));
@@ -99,36 +87,39 @@ public abstract class Operations {
         }
     }
     
-    public void sendHelp(IChannel chan){
+    public static void sendHelp(IChannel chan){
         sendMessage(chan,
-                    "WHAT MEANS WHAT:\n```\n"
+                    "What means what:\n```\n"
                     + "<arg> - what you must enter\n"
                     + "[arg] - what is optional to enter\n\n"
                     + "```\n\n"
-                    + "MAIN COMMANDS:\n```\n"
+                    + "Main commands:\n```\n"
                     + "!help - shows help\n"
                     + "!track - sends current track name and ID\n"
                     + "!list - sends tracks list\n"
                     + "!search <sentence> - search for <sentence> in tracks list\n"
                     + "```\n\n"
-                    + "ADMIN COMMANDS:\n```\n"
+                    + "Admin commands:\n```\n"
                     + "!bot <command> [value] - used for controlling bot remotely\n"
                     + "\trestart - restarts bot (but no changes to code get applied)\n"
                     + "\tshutdown - shuts bot down\n"
+                    + "\tavatar - changes bot's avatar\n"
+                    + "\t\tNote: for this comand to work, you need to attach an image\n"
+                    + "\tnick <nick> - changes bot's nickname\n"
                     + "!music <command> [value] - used for controlling music\n"
-                    + "\tstop - stops music if it's not stopped already\n"
-                    + "\tresume - resumes music if it got stopped for some reason\n"
+                    + "\tpause - pauses music\n"
+                    + "\tresume - resumes music\n"
                     + "\tplay - plays a random track from the playlist\n"
-                    + "\tnext - plays next track from the list\n"
-                    + "\tprevious - plays previous track from the list\n"
+                    + "\tnext - plays next track from the playlist\n"
+                    + "\tprevious - plays previous track from the playlist\n"
                     + "\trejoin - rejoins to music voice channel\n"
                     + "\treplay - replays current track\n"
                     + "\tshuffle - shuffles playlist\n"
                     + "\tsort - sorts playlist\n"
-                    + "\tplay <id> - plays a track from playlist with ID of <id>\n"
-                    + "\twind <time> - winds/rewinds current track to <time> seconds\n"
-                    + "\tvolume <vol> - sets music volume to <vol>\n"
-                    + "\tloop <true/false> - sets looping to <true/false>\n"
+                    + "\tplay <id> - plays a track from playlist\n"
+                    + "\twind <time> - winds/rewinds current track\n"
+                    + "\tvolume <vol> - changes music volume\n"
+                    + "\tloop <true/false> - changes looping a single track\n"
                     + "!files <command> [value] - used for controlling files\n"
                     + "\tload - loads any new files\n"
                     + "\tunload - unloads all the files\n"
@@ -136,7 +127,7 @@ public abstract class Operations {
                     + "```");
     }
     
-    public UserVar findUser(IUser user){
+    public static UserVar findUser(IUser user){
         for(UserVar userVar : users){
             if(userVar.user.equals(user))
                 return userVar;
@@ -144,7 +135,7 @@ public abstract class Operations {
         return null;
     }
     
-    public void updateUsers(){
+    public static void updateUsers(){
         List<IUser> usersList = bot.client.getUsers();
         
         int a = 0;

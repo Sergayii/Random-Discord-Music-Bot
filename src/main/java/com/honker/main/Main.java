@@ -20,13 +20,13 @@ import java.util.Scanner;
 import java.util.stream.Collectors;
 import sx.blah.discord.api.events.EventSubscriber;
 import sx.blah.discord.handle.impl.events.ReadyEvent;
-import sx.blah.discord.handle.impl.events.ReconnectSuccessEvent;
 import sx.blah.discord.handle.obj.IChannel;
 import sx.blah.discord.handle.obj.IGuild;
 import sx.blah.discord.handle.obj.IVoiceChannel;
+import sx.blah.discord.handle.obj.Status;
 import sx.blah.discord.util.DiscordException;
 
-public class Main extends Operations{
+public class Main {
 
     public static final String COMMAND_SYMBOL = "!";
     public static String BOT_TOKEN, MAIN_CHANNEL_ID, VOICE_CHANNEL_ID, GUILD_ID, MUSIC_PATH;
@@ -44,22 +44,19 @@ public class Main extends Operations{
     public static ArrayList<File> music = new ArrayList<File>();
 
     @EventSubscriber
-    public void onReconnectSuccessEvent(ReconnectSuccessEvent e){
-        updateUsers();
-    }
-
-    @EventSubscriber
     public void onReadyEvent(ReadyEvent e){
-        updateUsers();
-
         mainChannel = bot.client.getChannelByID(MAIN_CHANNEL_ID);
 
         playerManager = new DefaultAudioPlayerManager();
         AudioSourceManagers.registerLocalSource(playerManager);
         musicManager = new MusicManager(playerManager);
-
+        
         IGuild guild = bot.client.getGuildByID(GUILD_ID);
-        guild.getAudioManager().setAudioProvider(musicManager.getAudioProvider());
+        try {
+            guild.getAudioManager().setAudioProvider(musicManager.getAudioProvider());
+        } catch(NullPointerException ex) {
+            ex.printStackTrace();
+        }
 
         playMusic();
         
@@ -72,7 +69,7 @@ public class Main extends Operations{
         musicManager.scheduler.queue.clear();
         musicManager.scheduler.setCurrentTrack(null);
     }
-
+    
     public static void loadMusic(){
         List<String> filesToLoad;
         try {
@@ -85,7 +82,6 @@ public class Main extends Operations{
         if(filesToLoad != null){
             for(String fileName : filesToLoad)
                 load(fileName);
-
             try {
                 Thread.sleep(10000);
             } catch (InterruptedException ex) {
@@ -174,7 +170,7 @@ public class Main extends Operations{
         System.exit(0);
     }
 
-    public static void restart() throws InterruptedException{
+    public static void restart() {
         exit("Restarting");
         join();
     }
@@ -184,9 +180,11 @@ public class Main extends Operations{
     }
 
     public static void exit(String exitMessage){
+        bot.client.changeStatus(Status.empty());
+        
         List<IVoiceChannel> voiceChannels = bot.client.getConnectedVoiceChannels();
         
-        new Thread(new Runnable(){
+        Thread t = new Thread(new Runnable(){
             
             @Override
             public void run(){
@@ -195,7 +193,8 @@ public class Main extends Operations{
                         channel.leave();
                 }
             }
-        }).start();
+        });
+        t.start();
 
         try {
             if(exitMessage != null && !exitMessage.equals(""))
@@ -214,15 +213,19 @@ public class Main extends Operations{
         ready = false;
     }
 
-    public static void join() throws InterruptedException{
-        try {
-            bot = new Bot();
-        } catch (DiscordException ex) {
-            ex.printStackTrace();
-        }
+    public static void join() {
+        bot = new Bot();
     }
 
-    public static void main(String[] args) throws DiscordException, InterruptedException, FileNotFoundException, NoSuchFieldException{
+    public static void main(String[] args) throws DiscordException, InterruptedException, FileNotFoundException, NoSuchFieldException {
+        new Thread(new Runnable() {
+            
+            @Override
+            public void run() {
+                while(true) {}
+            }
+        }).start();
+        
         Scanner settingsReader = new Scanner(new File("./settings.txt"));
         StringBuilder string = new StringBuilder();
         while(settingsReader.hasNext()){

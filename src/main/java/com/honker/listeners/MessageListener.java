@@ -2,6 +2,7 @@ package com.honker.listeners;
 
 import static com.honker.main.Main.COMMAND_SYMBOL;
 import static com.honker.main.Main.MAIN_CHANNEL_ID;
+import static com.honker.main.Main.bot;
 import static com.honker.main.Main.loadMusic;
 import static com.honker.main.Main.music;
 import static com.honker.main.Main.musicManager;
@@ -12,7 +13,13 @@ import static com.honker.main.Main.reloadMusic;
 import static com.honker.main.Main.restart;
 import static com.honker.main.Main.shutdown;
 import static com.honker.main.Main.unloadMusic;
-import com.honker.main.Operations;
+import static com.honker.main.Operations.sendCommandDone;
+import static com.honker.main.Operations.sendCommandFailed;
+import static com.honker.main.Operations.sendCommandInProgress;
+import static com.honker.main.Operations.sendFile;
+import static com.honker.main.Operations.sendHelp;
+import static com.honker.main.Operations.sendMessage;
+import static com.honker.main.Operations.sendTracksList;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -21,47 +28,46 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
+import java.util.List;
 import sx.blah.discord.api.events.IListener;
 import sx.blah.discord.handle.impl.events.MessageReceivedEvent;
 import sx.blah.discord.handle.obj.IChannel;
+import sx.blah.discord.handle.obj.IMessage.Attachment;
 import sx.blah.discord.handle.obj.IUser;
+import sx.blah.discord.util.Image;
 
-public class MessageListener extends Operations implements IListener<MessageReceivedEvent>{
+public class MessageListener implements IListener<MessageReceivedEvent> {
     
-    public void command(IChannel chan, IUser user, String msg, String userName) throws FileNotFoundException{
-        if(msg.length() > 1){
-            msg = msg.substring(1).toLowerCase();
-            for(String str = " "; str.length() < 1000; str += " ")
-                msg = msg.replace(str, " ");
-            msg = msg.replace("  ", " ");
+    public void command(IChannel chan, IUser user, String msg, String userName, List<Attachment> attachments) throws FileNotFoundException{
+        if(msg.length() > COMMAND_SYMBOL.length()){
+            msg = msg.substring(COMMAND_SYMBOL.length());
+            while(msg.contains("  "))
+                msg = msg.replace("  ", " ");
             msg = msg.trim();
-            String[] cmd = msg.split(" ");
+            String msgL = msg.toLowerCase();
+            String[] cmd = msgL.split(" ");
             
             if(cmd[0].equals("help")){
                 if(cmd.length == 1)
                     sendHelp(chan);
-                else
-                    sendCommandFailedLength(chan);
             } else if(cmd[0].equals("track")){
                 if(cmd.length == 1){
                     if(!ready)
                         sendCommandFailed(chan, "The music isn't even started yet!!!");
                     else
                         musicManager.scheduler.sendCurrentPlayingTrack(chan);
-                } else
-                    sendCommandFailedLength(chan);
+                }
             } else if(cmd[0].equals("list")){
                 if(cmd.length == 1){
                     if(!ready)
                         sendCommandFailed(chan, "The music isn't even started yet!!!");
                     else
                         sendTracksList(chan);
-                } else
-                    sendCommandFailedLength(chan);
+                }
             } else if(cmd[0].equals("search")){
                 if(cmd.length > 1){
                     if(ready){
-                        cmd = msg.split(" ", 2);
+                        cmd = msgL.split(" ", 2);
 
                         ArrayList<File> results = new ArrayList<File>();
                         String search = cmd[1];
@@ -114,102 +120,88 @@ public class MessageListener extends Operations implements IListener<MessageRece
                             sendMessage(chan, "I found nothing!");
                     } else
                         sendCommandFailed(chan, "The music isn't even started yet!!!");
-                } else sendCommandFailedLength(chan);
+                }
             } else{
-                //if(user.getPermissionsForGuild(bot.client.getGuildByID(GUILD_ID))){
-                    if(cmd[0].equals("bot") && cmd.length == 2){
-                        if(cmd[1].equals("restart")){
+                if(cmd[0].equals("bot")){
+                    if(cmd[1].equals("restart")){
+                        if(cmd.length == 2) {
                             sendCommandInProgress(chan);
-                            try {
-                                restart();
-                            } catch (InterruptedException ex) {
-                                shutdown();
-                            }
+                            restart();
                             sendCommandDone(chan);
-                        } else if(cmd[1].equals("shutdown")){
+                        }
+                    } else if(cmd[1].equals("shutdown")){
+                        if(cmd.length == 2) {
                             if(!ready)
-                                sendCommandFailed(chan, "Main.ready == false");
+                                sendCommandFailed(chan, "I'm not done launching, wait!");
                             else
                                 shutdown();
                         }
-                    } else if(cmd[0].equals("music") && cmd.length == 2){
-                        if(cmd[1].equals("resume")){
+                    } else if(cmd[1].equals("avatar")) {
+                        if(cmd.length == 2 && attachments.size() == 1) {
+                            cmd = msg.split(" ", 3);
+                            try {
+                                bot.client.changeAvatar(Image.forUrl("png", attachments.get(0).getUrl()));
+                                sendCommandDone(chan);
+                            } catch(Exception e) {
+                                e.printStackTrace();
+                                sendCommandFailed(chan, "Something went wrong, sorry!");
+                            }
+                        }
+                    } else if(cmd[1].equals("nick")) {
+                        if(cmd.length > 1) {
+                            cmd = msg.split(" ", 3);
+                            try {
+                                bot.client.changeUsername(cmd[2]);
+                                sendCommandDone(chan);
+                            } catch(Exception e) {
+                                e.printStackTrace();
+                                sendCommandFailed(chan, "Something went wrong, sorry!");
+                            }
+                        }
+                    }
+                } else if(cmd[0].equals("music")){
+                    if(cmd[1].equals("resume")){
+                        if(cmd.length == 2) {
                             if(!ready)
-                                sendCommandFailed(chan, "Main.ready == false");
+                                sendCommandFailed(chan, "The music isn't even started yet!");
                             else if(ready && !musicPaused)
-                                sendCommandFailed(chan, "Main.musicPaused == false");
+                                sendCommandFailed(chan, "The music isn't paused!");
                             else if(ready && musicPaused){
                                 musicManager.scheduler.player.setPaused(false);
                                 musicPaused = false;
                                 sendCommandDone(chan);
                             }
-                        } else if(cmd[1].equals("stop")){
+                        }
+                    } else if(cmd[1].equals("pause")){
+                        if(cmd.length == 2) {
                             if(!ready)
-                                sendCommandFailed(chan, "Main.ready == false");
+                                sendCommandFailed(chan, "The music isn't even started yet!");
                             else if(ready && musicPaused)
-                                sendCommandFailed(chan, "Main.musicPaused == true");
+                                sendCommandFailed(chan, "The music is already paused!");
                             else{
                                 musicManager.scheduler.player.setPaused(true);
                                 musicPaused = true;
                                 sendCommandDone(chan);
                             }
-                        } else if(cmd[1].equals("play")){
+                        }
+                    } else if(cmd[1].equals("play")){
+                        if(cmd.length == 2) {
                             if(!ready)
-                                sendCommandFailed(chan, "Main.ready == false");
+                                sendCommandFailed(chan, "The music isn't even started yet!");
                             else{
                                 musicManager.scheduler.playRandomTrack();
                                 sendCommandDone(chan);
                             }
-                        } else if(cmd[1].equals("rejoin")){
-                            musicManager.scheduler.rejoinMusicChannel();
-                            sendCommandDone(chan);
-                        } else if(cmd[1].equals("replay")){
-                            if(musicManager.scheduler.getCurrentTrack() != null){
-                                play(musicManager.scheduler.getCurrentTrack());
-                                sendCommandDone(chan);
-                            } else
-                                sendCommandFailed(chan, "Main.musicManager.scheduler.currentTrack == null");
-                        } else if(cmd[1].equals("next")){
+                        } else if(cmd.length == 3) {
                             if(!ready)
-                                sendCommandFailed(chan, "Main.ready == false");
-                            else{
-                                musicManager.scheduler.nextTrack();
-                                sendCommandDone(chan);
-                            }
-                        } else if(cmd[1].equals("previous")){
-                            if(!ready)
-                                sendCommandFailed(chan, "Main.ready == false");
-                            else{
-                                musicManager.scheduler.previousTrack();
-                                sendCommandDone(chan);
-                            }
-                        } else if(cmd[1].equals("shuffle")){
-                            if(!ready)
-                                sendCommandFailed(chan, "Main.ready == false");
-                            else{
-                                musicManager.scheduler.shufflePlaylist();
-                                sendCommandDone(chan);
-                            }
-                        } else if(cmd[1].equals("sort")){
-                            if(!ready)
-                                sendCommandFailed(chan, "Main.ready == false");
-                            else{
-                                musicManager.scheduler.sortPlaylist();
-                                sendCommandDone(chan);
-                            }
-                        } else
-                            sendCommandFailed(chan, "Unknown argument");
-                    } else if(cmd[0].equals("music") && cmd.length == 3){
-                        if(cmd[1].equals("play")){
-                            if(!ready)
-                                sendCommandFailed(chan, "Main.ready == false");
+                                sendCommandFailed(chan, "The music isn't even started yet!");
                             else{
                                 try{
                                     int index = Integer.parseInt(cmd[2]);
                                     if(index >= musicManager.scheduler.queue.size())
-                                        sendCommandFailed(chan, "cmd[2] value is too big");
+                                        sendCommandFailed(chan, "ID is too big");
                                     else if(index < 0)
-                                        sendCommandFailed(chan, "cmd[2] value is too small");
+                                        sendCommandFailed(chan, "ID is too small");
                                     else{
                                         boolean trackPlayed = play(musicManager.scheduler.queue.get(index));
                                         if(!trackPlayed)
@@ -218,13 +210,64 @@ public class MessageListener extends Operations implements IListener<MessageRece
                                             sendCommandDone(chan);
                                     }
                                 } catch(NumberFormatException ex){
-                                    sendCommandFailed(chan, "cmd[2] isn't an integer");
+                                    sendCommandFailed(chan, "ID isn't an integer");
                                 } catch(Exception ex){
                                     sendCommandFailed(chan, "Unexpected error");
                                     ex.printStackTrace();
                                 }
                             }
-                        } else if(cmd[1].equals("loop")){
+                        }
+                    } else if(cmd[1].equals("rejoin")){
+                        if(cmd.length == 2) {
+                            musicManager.scheduler.rejoinMusicChannel();
+                            sendCommandDone(chan);
+                        }
+                    } else if(cmd[1].equals("replay")){
+                        if(cmd.length == 2) {
+                            if(musicManager.scheduler.getCurrentTrack() != null){
+                                play(musicManager.scheduler.getCurrentTrack());
+                                sendCommandDone(chan);
+                            } else
+                                sendCommandFailed(chan, "No track is playing right now...");
+                        }
+                    } else if(cmd[1].equals("next")){
+                        if(cmd.length == 2) {
+                            if(!ready)
+                                sendCommandFailed(chan, "The music isn't even started yet!");
+                            else{
+                                musicManager.scheduler.nextTrack();
+                                sendCommandDone(chan);
+                            }
+                        }
+                    } else if(cmd[1].equals("previous")){
+                        if(cmd.length == 2) {
+                            if(!ready)
+                                sendCommandFailed(chan, "The music isn't even started yet!");
+                            else{
+                                musicManager.scheduler.previousTrack();
+                                sendCommandDone(chan);
+                            }
+                        }
+                    } else if(cmd[1].equals("shuffle")){
+                        if(cmd.length == 2) {
+                            if(!ready)
+                                sendCommandFailed(chan, "The music isn't even started yet!");
+                            else{
+                                musicManager.scheduler.shufflePlaylist();
+                                sendCommandDone(chan);
+                            }
+                        }
+                    } else if(cmd[1].equals("sort")){
+                        if(cmd.length == 2) {
+                            if(!ready)
+                                sendCommandFailed(chan, "The music isn't even started yet!");
+                            else{
+                                musicManager.scheduler.sortPlaylist();
+                                sendCommandDone(chan);
+                            }
+                        }
+                    } else if(cmd[1].equals("loop")){
+                        if(cmd.length == 3) {
                             if(cmd[2].equals("true")){
                                 musicManager.scheduler.looping = true;
                                 sendCommandDone(chan);
@@ -232,83 +275,68 @@ public class MessageListener extends Operations implements IListener<MessageRece
                                 musicManager.scheduler.looping = false;
                                 sendCommandDone(chan);
                             } else
-                                sendCommandFailed(chan, "cmd[2] isn't \"true\" nor \"false\"");
-                        } else if(cmd[1].equals("wind")){
+                                sendCommandFailed(chan, "Argument isn't \"true\" nor \"false\"");
+                        }
+                    } else if(cmd[1].equals("wind")){
+                        if(cmd.length == 3) {
                             if(!ready)
-                                sendCommandFailed(chan, "Main.ready == false");
+                                sendCommandFailed(chan, "The music isn't even started yet!");
                             else if(ready && musicPaused)
-                                sendCommandFailed(chan, "Main.musicPaused == true");
+                                sendCommandFailed(chan, "The music is paused!");
                             else{
                                 try{
                                     int time = Integer.parseInt(cmd[2]);
                                     int duration = (int)(musicManager.scheduler.getCurrentTrack().getDuration() / 1000);
                                     if(time > duration)
-                                        sendCommandFailed(chan, "cmd[2] value is too big");
+                                        sendCommandFailed(chan, "\"time\" is too big");
                                     else if(time < 0)
-                                        sendCommandFailed(chan, "cmd[2] value is too small");
+                                        sendCommandFailed(chan, "\"time\" is too small");
                                     else{
                                         musicManager.scheduler.setTrackTime(time);
                                         sendCommandDone(chan);
                                     }
                                 } catch(NumberFormatException ex){
-                                    sendCommandFailed(chan, "cmd[2] isn't an integer");
+                                    sendCommandFailed(chan, "\"time\" isn't an integer");
                                 } catch(Exception ex){
                                     sendCommandFailed(chan, "Unexpected error");
                                 }
                             }
-                        } else if(cmd[1].equals("volume")){
+                        }
+                    } else if(cmd[1].equals("volume")){
+                        if(cmd.length == 3) {
                             if(!ready)
-                                sendCommandFailed(chan, "Main.ready == false");
+                                sendCommandFailed(chan, "The music isn't even started yet!");
                             else{
                                 try{
                                     int volume = Integer.parseInt(cmd[2]);
                                     if(volume > 100)
-                                        sendCommandFailed(chan, "cmd[2] value is too big");
+                                        sendCommandFailed(chan, "\"vol\" is too big");
                                     else if(volume < 0)
-                                        sendCommandFailed(chan, "cmd[2] value is too small");
+                                        sendCommandFailed(chan, "\"vol\" is too small");
                                     else{
                                         musicManager.scheduler.setVolume(volume);
                                         sendCommandDone(chan);
                                     }
                                 } catch(NumberFormatException ex){
-                                    sendCommandFailed(chan, "cmd[2] isn't an integer");
+                                    sendCommandFailed(chan, "\"vol\" isn't an integer");
                                 } catch(Exception ex){
                                     sendCommandFailed(chan, "Unexpected error");
                                 }
                             }
-                        } else
-                            sendCommandFailed(chan, "Unknown argument");
-                    } else if(cmd[0].equals("files") && cmd.length == 2){
-                        if(cmd[1].equals("unload")){
-                            if(!ready)
-                                sendCommandFailed(chan, "Main.ready == false");
-                            else{
-                                sendCommandInProgress(chan);
-                                unloadMusic();
-                                sendCommandDone(chan);
-                            }
-                        } else if(cmd[1].equals("reload")){
-                            if(!ready)
-                                sendCommandFailed(chan, "Main.ready == false");
-                            else{
-                                sendCommandInProgress(chan);
-                                reloadMusic();
-                                sendCommandDone(chan);
-                                musicManager.scheduler.playRandomTrack();
-                            }
-                        } else if(cmd[1].equals("load")){
-                            if(!ready)
-                                sendCommandFailed(chan, "Main.ready == false");
-                            else{
-                                sendCommandInProgress(chan);
-                                loadMusic();
-                                sendCommandDone(chan);
-                            }
                         }
-                    } else
-                        sendCommandFailed(chan, "Unknown command: " + cmd[0]);
-//                } else
-//                    sendCommandFailed(chan, "You don't have permissions to do this command, sorry!");
+                    }
+                } else if(cmd[0].equals("files")) {
+                    if(cmd[1].equals("reload")) {
+                        if(cmd.length == 2)
+                            reloadMusic();
+                    } else if(cmd[1].equals("load")) {
+                        if(cmd.length == 2)
+                            loadMusic();
+                    } else if(cmd[1].equals("unload")) {
+                        if(cmd.length == 2)
+                            unloadMusic();
+                    }
+                }
             }
         }
     }
@@ -323,7 +351,7 @@ public class MessageListener extends Operations implements IListener<MessageRece
         if(msg.startsWith(COMMAND_SYMBOL) && !user.isBot()){
             try {
                 if(chan.getID().equals(MAIN_CHANNEL_ID))
-                    command(chan, user, msg, userName);
+                    command(chan, user, msg, userName, e.getMessage().getAttachments());
             } catch (FileNotFoundException ex) {
                 ex.printStackTrace();
             }

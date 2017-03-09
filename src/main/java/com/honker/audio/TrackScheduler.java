@@ -4,7 +4,6 @@ import static com.honker.main.Main.VOICE_CHANNEL_ID;
 import static com.honker.main.Main.bot;
 import static com.honker.main.Main.mainChannel;
 import static com.honker.main.Main.music;
-import static com.honker.main.Main.musicManager;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.player.event.AudioEventAdapter;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
@@ -16,6 +15,7 @@ import java.io.File;
 import java.util.Collections;
 import sx.blah.discord.handle.obj.IChannel;
 import sx.blah.discord.handle.obj.IVoiceChannel;
+import sx.blah.discord.handle.obj.Status;
 
 public class TrackScheduler extends AudioEventAdapter {
     
@@ -54,21 +54,13 @@ public class TrackScheduler extends AudioEventAdapter {
                 stop();
                 return false;
             }
-
-            String trackName = getTrackName(getCurrentTrack());
-            if(trackName != null && trackName.contains(" - ")){
-                String author = getTrackName(getCurrentTrack()).split(" - ")[0].toLowerCase();
-                String title = getTrackName(getCurrentTrack()).split(" - ")[1].toLowerCase();
-                if(author.equals("the black dahlia murder")){
-                    if(title.equals("blood in the ink"))
-                        setTrackTime(18);
-                    else if(title.equals("carbonized in cruciform"))
-                        setTrackTime(38);
-                } else if(author.equals("johnny cash")){
-                    if(title.equals("casey jones"))
-                        setTrackTime(12);
-                }
+            
+            String trackName = getTrackName(currentTrack);
+            if(trackName == null) {
+                trackName = "None";
             }
+            bot.client.changeStatus(Status.game(trackName));
+            
             return true;
         } else{
             try{
