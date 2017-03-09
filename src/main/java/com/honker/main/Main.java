@@ -22,6 +22,7 @@ import sx.blah.discord.api.events.EventSubscriber;
 import sx.blah.discord.handle.impl.events.ReadyEvent;
 import sx.blah.discord.handle.obj.IChannel;
 import sx.blah.discord.handle.obj.IGuild;
+import sx.blah.discord.handle.obj.IMessage;
 import sx.blah.discord.handle.obj.IVoiceChannel;
 import sx.blah.discord.handle.obj.Status;
 import sx.blah.discord.util.DiscordException;
@@ -33,6 +34,7 @@ public class Main {
 
     public static boolean ready = false, musicPaused = true;
 
+    public static IMessage progress;
     public static IChannel mainChannel;
 
     public static MusicManager musicManager;
@@ -61,6 +63,22 @@ public class Main {
         playMusic();
         
         ready = true;
+        
+        Thread t = new Thread(new Runnable() {
+            
+            @Override
+            public void run() {
+                while(ready) {
+                    musicManager.scheduler.updateTrack();
+                    try {
+                        Thread.sleep(2000);
+                    } catch (InterruptedException ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            }
+        });
+        t.start();
     }
 
     public static void unloadMusic(){
@@ -218,14 +236,6 @@ public class Main {
     }
 
     public static void main(String[] args) throws DiscordException, InterruptedException, FileNotFoundException, NoSuchFieldException {
-        new Thread(new Runnable() {
-            
-            @Override
-            public void run() {
-                while(true) {}
-            }
-        }).start();
-        
         Scanner settingsReader = new Scanner(new File("./settings.txt"));
         StringBuilder string = new StringBuilder();
         while(settingsReader.hasNext()){

@@ -4,18 +4,24 @@ import static com.honker.main.Main.VOICE_CHANNEL_ID;
 import static com.honker.main.Main.bot;
 import static com.honker.main.Main.mainChannel;
 import static com.honker.main.Main.music;
+import static com.honker.main.Main.musicPaused;
+import static com.honker.main.Main.progress;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.player.event.AudioEventAdapter;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason;
 import java.util.ArrayList;
 import java.util.Random;
-import static com.honker.main.Main.musicPaused;
+import static com.honker.main.Main.ready;
+import static com.honker.main.Operations.sendProgress;
 import java.io.File;
 import java.util.Collections;
 import sx.blah.discord.handle.obj.IChannel;
 import sx.blah.discord.handle.obj.IVoiceChannel;
 import sx.blah.discord.handle.obj.Status;
+import sx.blah.discord.util.DiscordException;
+import sx.blah.discord.util.MissingPermissionsException;
+import sx.blah.discord.util.RateLimitException;
 
 public class TrackScheduler extends AudioEventAdapter {
     
@@ -43,6 +49,15 @@ public class TrackScheduler extends AudioEventAdapter {
     }
     
     public boolean playNoMessage(AudioTrack track){
+        if(progress != null) {
+            try {
+                progress.delete();
+            } catch (MissingPermissionsException | RateLimitException | DiscordException ex) {
+                ex.printStackTrace();
+            }
+        }
+        progress = null;
+        
         resume();
         
         if(new File(track.getIdentifier()).exists()){
@@ -76,6 +91,7 @@ public class TrackScheduler extends AudioEventAdapter {
         boolean bool = playNoMessage(track);
         
         sendCurrentPlayingTrack();
+        sendProgress(mainChannel);
         
         return bool;
     }
@@ -86,6 +102,7 @@ public class TrackScheduler extends AudioEventAdapter {
     
     public void setTrackTime(int time){
         currentTrack.setPosition(time * 1000);
+        updateTrack();
     }
     
     public String getTrackName(AudioTrack track){
@@ -199,6 +216,49 @@ public class TrackScheduler extends AudioEventAdapter {
         else{
             shufflePlaylist();
             play(queue.get(queue.size() - 1));
+        }
+    }
+    
+    public void updateTrack() {
+        if(!ready || musicPaused || progress == null) {
+            return;
+        }
+        
+        int scale = 5;
+        int max = 20;
+        int dur = (int)currentTrack.getDuration() / 1000;
+        int pos = (int)currentTrack.getPosition() / 1000;
+        int per = 0;
+        for(int a = 1; a < max; a++) {
+            if(pos >= dur - scale * 2) {
+                per = max;
+                break;
+            }
+            
+            int dur1 = (int)(dur / max * a);
+            int dur2 = (int)(dur / max * (a + 1));
+            if(pos >= dur1 && pos <= dur2) {
+                per = a;
+                break;
+            }
+        }
+        
+        String msg = "Track progress:\n";
+        for(int a = 0; a < per; a++) {
+            msg += "#";
+        }
+        
+        if(per * scale == 0) {
+            msg += "1%";
+        } else {
+            msg += " " + (per * scale) + "%";
+        }
+        
+        try {
+            if(progress != null)
+                progress.edit(msg);
+        } catch (MissingPermissionsException | RateLimitException | DiscordException ex) {
+            ex.printStackTrace();
         }
     }
     

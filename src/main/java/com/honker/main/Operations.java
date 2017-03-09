@@ -2,6 +2,7 @@ package com.honker.main;
 
 import static com.honker.main.Main.bot;
 import static com.honker.main.Main.musicManager;
+import static com.honker.main.Main.progress;
 import static com.honker.main.Main.users;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import java.io.BufferedWriter;
@@ -9,14 +10,14 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-//import java.util.ArrayList;
 import java.util.List;
 import sx.blah.discord.handle.obj.IChannel;
+import sx.blah.discord.handle.obj.IMessage;
 import sx.blah.discord.handle.obj.IUser;
 
 public abstract class Operations {
     
-    public String[] marks = new String[]{"!", "#", "$", "%", "^", "&", "*", "(", ")", "+", "=", "-", "<", ">", ",", ".", ":", ";", "@", "?", "\n"};
+    public static String[] marks = new String[]{"!", "#", "$", "%", "^", "&", "*", "(", ")", "+", "=", "-", "<", ">", ",", ".", ":", ";", "@", "?", "\n"};
     
     public static void sendFile(IChannel chan, String message, File file){
         try{
@@ -125,6 +126,20 @@ public abstract class Operations {
                     + "\tunload - unloads all the files\n"
                     + "\treload - reloads all the files\n"
                     + "```");
+    }
+    
+    public static void sendProgress(IChannel chan) {
+        IMessage msg;
+        try{
+            msg = chan.sendMessage("Track progress:");
+            progress = msg;
+        } catch(Exception e){
+            e.printStackTrace();
+            progress = null;
+            return;
+        }
+        
+        musicManager.scheduler.updateTrack();
     }
     
     public static UserVar findUser(IUser user){
