@@ -257,7 +257,7 @@ public class TrackScheduler extends AudioEventAdapter {
         try {
             if(progress != null)
                 progress.edit(msg);
-        } catch (MissingPermissionsException | RateLimitException | DiscordException ex) {
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
     }
