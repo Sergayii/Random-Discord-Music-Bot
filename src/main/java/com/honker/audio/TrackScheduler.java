@@ -18,6 +18,8 @@ import static com.honker.main.Operations.sendProgress;
 import java.io.File;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import sx.blah.discord.handle.obj.IChannel;
 import sx.blah.discord.handle.obj.IVoiceChannel;
 import sx.blah.discord.handle.obj.Status;
@@ -187,6 +189,11 @@ public class TrackScheduler extends AudioEventAdapter {
     public void clearQueue() {
         stop();
         queue.clear();
+        try {
+            progress.delete();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
     }
     
     public void queue(AudioTrack track) {
