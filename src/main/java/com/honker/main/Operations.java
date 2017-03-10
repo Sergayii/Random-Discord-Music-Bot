@@ -73,6 +73,11 @@ public abstract class Operations {
     
     public static void sendTracksList(IChannel chan){
         try {
+            if(musicManager.scheduler.queue.isEmpty()) {
+                sendMessage(chan, "The playlist is empty");
+                return;
+            }
+            
             File file = File.createTempFile("musicList", ".txt");
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file)));
             
@@ -82,7 +87,7 @@ public abstract class Operations {
                 writer.flush();
             }
             
-            sendFile(chan, "There's just too much tracks, i'll send the list in this file", file);
+            sendFile(chan, "There's just too much tracks, i'll send the playlist in this file", file);
         } catch (IOException ex) {
             ex.printStackTrace();
         }
@@ -97,7 +102,7 @@ public abstract class Operations {
                     + "Main commands:\n```\n"
                     + "!help - shows help\n"
                     + "!track - sends current track name and ID\n"
-                    + "!list - sends tracks list\n"
+                    + "!playlist - sends the playlist\n"
                     + "!search <sentence> - search for <sentence> in tracks list\n"
                     + "!ping - sends \"pong\" if the bot is still alive\n"
                     + "```\n\n"
@@ -111,6 +116,7 @@ public abstract class Operations {
                     + "!music <command> [value] - used for controlling music\n"
                     + "\tpause - pauses music\n"
                     + "\tresume - resumes music\n"
+                    + "\tstop - stops the music\n"
                     + "\tplay - plays a random track from the playlist\n"
                     + "\tnext - plays next track from the playlist\n"
                     + "\tprevious - plays previous track from the playlist\n"
@@ -118,10 +124,12 @@ public abstract class Operations {
                     + "\treplay - replays current track\n"
                     + "\tshuffle - shuffles playlist\n"
                     + "\tsort - sorts playlist\n"
+                    + "\tclear - clears playlist\n"
                     + "\tplay <id> - plays a track from playlist\n"
                     + "\twind <time> - winds/rewinds current track\n"
                     + "\tvolume <vol> - changes music volume\n"
                     + "\tloop <true/false> - changes looping a single track\n"
+                    + "\tqueue <track> - add a track to the playlist"
                     + "!files <command> [value] - used for controlling files\n"
                     + "\tload - loads any new files\n"
                     + "\tunload - unloads all the files\n"

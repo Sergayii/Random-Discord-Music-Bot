@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
 import java.util.stream.Collectors;
@@ -113,12 +112,7 @@ public class Main {
 
             music = loadedFiles;
 
-            HashSet<File> newMusic = new HashSet<File>(music);
-            music = new ArrayList<File>(newMusic);
-
-            HashSet<AudioTrack> newQueue = new HashSet<AudioTrack>(musicManager.scheduler.queue);
-            musicManager.scheduler.queue = new ArrayList<AudioTrack>(newQueue);
-
+            musicManager.scheduler.sortMusic();
             musicManager.scheduler.shufflePlaylist();
         }
     }
@@ -167,11 +161,13 @@ public class Main {
 
             @Override
             public void noMatches() {
-                System.out.println("Can't find song: " + trackUrl);
+                Operations.sendMessage(mainChannel, "No track found: " + trackUrl);
             }
 
             @Override
-            public void loadFailed(FriendlyException exception) {}
+            public void loadFailed(FriendlyException exception) {
+                Operations.sendMessage(mainChannel, "Loading track " + trackUrl + " failed.");
+            }
         });
     }
 

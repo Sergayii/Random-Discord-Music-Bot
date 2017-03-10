@@ -2,6 +2,7 @@ package com.honker.audio;
 
 import static com.honker.main.Main.VOICE_CHANNEL_ID;
 import static com.honker.main.Main.bot;
+import static com.honker.main.Main.load;
 import static com.honker.main.Main.mainChannel;
 import static com.honker.main.Main.music;
 import static com.honker.main.Main.musicPaused;
@@ -16,6 +17,7 @@ import static com.honker.main.Main.ready;
 import static com.honker.main.Operations.sendProgress;
 import java.io.File;
 import java.util.Collections;
+import java.util.HashSet;
 import sx.blah.discord.handle.obj.IChannel;
 import sx.blah.discord.handle.obj.IVoiceChannel;
 import sx.blah.discord.handle.obj.Status;
@@ -26,7 +28,7 @@ import sx.blah.discord.util.RateLimitException;
 public class TrackScheduler extends AudioEventAdapter {
     
     public final AudioPlayer player;
-    public ArrayList<AudioTrack> queue;
+    public ArrayList<AudioTrack> queue = new ArrayList<AudioTrack>();;
     
     private AudioTrack currentTrack;
     
@@ -34,9 +36,8 @@ public class TrackScheduler extends AudioEventAdapter {
 
     public TrackScheduler(AudioPlayer player) {
         this.player = player;
-        queue = new ArrayList<AudioTrack>();
     }
-
+    
     public void resume(){
         stop();
         musicPaused = false;
@@ -45,6 +46,7 @@ public class TrackScheduler extends AudioEventAdapter {
     
     public void stop(){
         musicPaused = true;
+        bot.client.changeStatus(Status.empty());
         player.stopTrack();
     }
     
@@ -121,7 +123,7 @@ public class TrackScheduler extends AudioEventAdapter {
     
     public String getTrackInfo(AudioTrack track){
         String trackName = getTrackName(track);
-        return "Track name: " + trackName + System.lineSeparator() + "Duration: " + (track.getDuration() / 1000) + " seconds" + System.lineSeparator() + "ID: " + getTrackID(track.makeClone());
+        return "Track name: " + trackName + System.lineSeparator() + "Duration: " + (track.getDuration() / 1000) + " seconds" + System.lineSeparator() + "ID: " + getTrackID(track);
     }
     
     public int getTrackID(AudioTrack track){
@@ -148,15 +150,26 @@ public class TrackScheduler extends AudioEventAdapter {
         }
     }
     
-    public void sortPlaylist(){
+    public void shuffleMusic() {
+        sortMusic();
+        Collections.shuffle(music);
+    }
+    
+    public void sortMusic() {
+        HashSet<File> newMusic = new HashSet<File>(music);
+        music = new ArrayList<File>(newMusic);
         Collections.sort(music);
-        Collections.sort(queue, (AudioTrack a, AudioTrack b) -> a.getIdentifier().compareTo(b.getIdentifier()));
     }
     
     public void shufflePlaylist(){
-        long seed = new Random().nextLong();
-        Collections.shuffle(music, new Random(seed));
-        Collections.shuffle(queue, new Random(seed));
+        sortPlaylist();
+        Collections.shuffle(queue);
+    }
+    
+    public void sortPlaylist(){
+        HashSet<AudioTrack> newQueue = new HashSet<AudioTrack>(queue);
+        queue = new ArrayList<AudioTrack>(newQueue);
+        Collections.sort(queue, (AudioTrack a, AudioTrack b) -> a.getIdentifier().compareTo(b.getIdentifier()));
     }
     
     public AudioTrack getRandomTrack(){
@@ -171,10 +184,23 @@ public class TrackScheduler extends AudioEventAdapter {
             return null;
     }
     
+    public void clearQueue() {
+        stop();
+        queue.clear();
+    }
+    
     public void queue(AudioTrack track) {
         queue.add(track);
     }
 
+    public void queue(String url) {
+        load(url);
+    }
+    
+    public void queue(File file) {
+        load(file.getAbsolutePath());
+    }
+    
     public void setCurrentTrack(AudioTrack track){
         currentTrack = track;
     }

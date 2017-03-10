@@ -57,7 +57,7 @@ public class MessageListener implements IListener<MessageReceivedEvent> {
                     else
                         musicManager.scheduler.sendCurrentPlayingTrack(chan);
                 }
-            } else if(cmd[0].equals("list")){
+            } else if(cmd[0].equals("playlist")){
                 if(cmd.length == 1){
                     if(!ready)
                         sendCommandFailed(chan, "The music isn't even started yet!!!");
@@ -187,6 +187,11 @@ public class MessageListener implements IListener<MessageReceivedEvent> {
                                 musicPaused = true;
                                 sendCommandDone(chan);
                             }
+                        }
+                    } else if(cmd[1].equals("stop")) {
+                        if(cmd.length == 2) {
+                            musicManager.scheduler.stop();
+                            sendCommandDone(chan);
                         }
                     } else if(cmd[1].equals("play")){
                         if(cmd.length == 2) {
@@ -327,6 +332,34 @@ public class MessageListener implements IListener<MessageReceivedEvent> {
                                     sendCommandFailed(chan, "Unexpected error");
                                 }
                             }
+                        }
+                    } else if(cmd[1].equals("queue")) {
+                        if(cmd.length > 2) {
+                            boolean queueWasEmpty = musicManager.scheduler.queue.isEmpty();
+                            
+                            cmd = msgL.split(" ", 3);
+                            int tracksLoaded = 0;
+                            for(File file : music) {
+                                if(file.getAbsolutePath().toLowerCase().contains(cmd[2])) {
+                                    musicManager.scheduler.queue(file);
+                                    tracksLoaded++;
+                                }
+                            }
+                            
+                            if(tracksLoaded == 0) {
+                                sendMessage(chan, "I found no tracks with this name!");
+                            } else {
+                                sendMessage(chan, "Queued " + tracksLoaded + " tracks");
+                            }
+                            
+                            if(queueWasEmpty) {
+                                musicManager.scheduler.play(musicManager.scheduler.queue.get(0));
+                            }
+                        }
+                    } else if(cmd[1].equals("clear")) {
+                        if(cmd.length == 2) {
+                            musicManager.scheduler.clearQueue();
+                            sendCommandDone(chan);
                         }
                     }
                 } else if(cmd[0].equals("files")) {
