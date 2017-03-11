@@ -131,7 +131,6 @@ public abstract class Operations {
                     + "\tloop <true/false> - changes looping a single track\n"
                     + "\tqueue <track> - add a track to the playlist"
                     + "!files <command> [value] - used for controlling files\n"
-                    + "\tload - loads any new files\n"
                     + "\tunload - unloads all the files\n"
                     + "\treload - reloads all the files\n"
                     + "```");

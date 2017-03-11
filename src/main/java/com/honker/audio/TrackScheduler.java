@@ -164,13 +164,10 @@ public class TrackScheduler extends AudioEventAdapter {
     }
     
     public void shufflePlaylist(){
-        sortPlaylist();
         Collections.shuffle(queue);
     }
     
     public void sortPlaylist(){
-        HashSet<AudioTrack> newQueue = new HashSet<AudioTrack>(queue);
-        queue = new ArrayList<AudioTrack>(newQueue);
         Collections.sort(queue, (AudioTrack a, AudioTrack b) -> a.getIdentifier().compareTo(b.getIdentifier()));
     }
     

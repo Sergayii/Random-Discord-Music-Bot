@@ -366,9 +366,6 @@ public class MessageListener implements IListener<MessageReceivedEvent> {
                     if(cmd[1].equals("reload")) {
                         if(cmd.length == 2)
                             reloadMusic();
-                    } else if(cmd[1].equals("load")) {
-                        if(cmd.length == 2)
-                            loadMusic();
                     } else if(cmd[1].equals("unload")) {
                         if(cmd.length == 2)
                             unloadMusic();
