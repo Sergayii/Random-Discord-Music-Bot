@@ -38,7 +38,7 @@ public class MessageListener implements IListener<MessageReceivedEvent> {
             msg = msg.trim();
             String msgL = msg.toLowerCase();
             String[] cmd = msgL.split(" ");
-
+            
             if(cmd[0].equals("help")) {
                 if(cmd.length == 1) {
                     sendHelp();
@@ -172,8 +172,7 @@ public class MessageListener implements IListener<MessageReceivedEvent> {
                         } else if(main.ready && !main.musicPaused) {
                             sendCommandFailed("The music isn't paused!");
                         } else if(main.ready && main.musicPaused) {
-                            main.musicManager.scheduler.player.setPaused(false);
-                            main.musicPaused = false;
+                            main.musicManager.scheduler.resume();
                             sendCommandDone();
                         }
                     }
@@ -184,8 +183,7 @@ public class MessageListener implements IListener<MessageReceivedEvent> {
                         } else if(main.ready && main.musicPaused) {
                             sendCommandFailed("The music is already paused!");
                         } else if(main.musicManager.scheduler.getCurrentTrack() != null) {
-                            main.musicManager.scheduler.player.setPaused(true);
-                            main.musicPaused = true;
+                            main.musicManager.scheduler.pause();
                             sendCommandDone();
                         } else {
                             sendCommandFailed("No track is playing right now...");
@@ -368,9 +366,10 @@ public class MessageListener implements IListener<MessageReceivedEvent> {
                 } else if(cmd[1].equals("queue")) {
                     if(cmd.length > 2) {
                         boolean queueWasEmpty = main.musicManager.scheduler.queue.isEmpty();
-
-                        cmd = msgL.split(" ", 3);
                         int tracksLoaded = 0;
+                        
+                        cmd = msgL.split(" ", 3);
+                        
                         for(File file : main.music) {
                             if(file.getAbsolutePath().toLowerCase().contains(cmd[2])) {
                                 main.musicManager.scheduler.queue(file);
@@ -383,8 +382,8 @@ public class MessageListener implements IListener<MessageReceivedEvent> {
                         } else {
                             sendMessage("Queued " + tracksLoaded + " tracks");
                         }
-
-                        if(queueWasEmpty) {
+                        
+                        if(queueWasEmpty && !main.musicManager.scheduler.queue.isEmpty()) {
                             main.musicManager.scheduler.play(main.musicManager.scheduler.queue.get(0));
                         }
                     }

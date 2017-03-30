@@ -36,17 +36,42 @@ public class TrackScheduler extends AudioEventAdapter {
     }
 
     public void resume() {
-        stop();
-        main.musicPaused = false;
         player.setPaused(false);
+        main.musicPaused = false;
+        updateStatus();
+    }
+    
+    public void pause() {
+        player.setPaused(true);
+        main.musicPaused = true;
+        updateStatus();
     }
 
     public void stop() {
-        main.musicPaused = true;
-        main.bot.client.changeStatus(Status.empty());
         player.stopTrack();
+        currentTrack = null;
+        main.musicPaused = true;
+        updateStatus();
     }
 
+    public void updateStatus() {
+        String trackName = "";
+        if(currentTrack == null || queue.isEmpty()) {
+            trackName = "nothing";
+        } else {
+            if(main.musicPaused || player.isPaused()) {
+                trackName = "(PAUSED) ";
+            }
+            trackName += getTrackName(currentTrack);
+        }
+
+        String oldStatus = main.bot.client.getOurUser().getStatus().getStatusMessage();
+        if(oldStatus != null && oldStatus.equals(trackName)) {
+            return;
+        }
+        main.bot.client.changeStatus(Status.game(trackName));
+    }
+    
     public boolean playNoMessage(AudioTrack track) {
         if(main.progress != null) {
             try {
@@ -69,11 +94,7 @@ public class TrackScheduler extends AudioEventAdapter {
                 return false;
             }
 
-            String trackName = getTrackName(currentTrack);
-            if(trackName == null) {
-                trackName = "None";
-            }
-            main.bot.client.changeStatus(Status.game(trackName));
+            updateStatus();
 
             return true;
         } else {
@@ -290,22 +311,18 @@ public class TrackScheduler extends AudioEventAdapter {
     
     public void joinMusicChannel() throws MissingPermissionsException {
         IVoiceChannel musicChannel = main.bot.client.getVoiceChannelByID(main.VOICE_CHANNEL_ID);
-        
         musicChannel.join();
     }
     
     public void leaveMusicChannel() {
         IVoiceChannel musicChannel = main.bot.client.getVoiceChannelByID(main.VOICE_CHANNEL_ID);
-        
         musicChannel.leave();
     }
     
     public void rejoinMusicChannel() throws MissingPermissionsException {
-        IVoiceChannel musicChannel = main.bot.client.getVoiceChannelByID(main.VOICE_CHANNEL_ID);
-        
         leaveMusicChannel();
         try {
-            Thread.sleep(3000);
+            Thread.sleep(1000);
         } catch(InterruptedException ex) {
             ex.printStackTrace();
         }

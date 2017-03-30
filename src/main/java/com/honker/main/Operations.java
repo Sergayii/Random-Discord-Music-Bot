@@ -99,12 +99,12 @@ public abstract class Operations {
                     + "!help - shows help\n"
                     + "!track - sends current track name and ID\n"
                     + "!playlist - sends the playlist\n"
-                    + "!search <sentence> - search for <sentence> in tracks list\n"
+                    + "!search <sentence> - search in tracks list\n"
                     + "!ping - sends \"pong\" if the bot is still alive\n"
                     + "```\n\n"
                     + "Admin commands:\n```\n"
                     + "!bot <command> [value] - used for controlling bot remotely\n"
-                    + "\trestart - restarts bot (but no changes to code get applied)\n"
+                    + "\trestart - restarts bot\n"
                     + "\tshutdown - shuts bot down\n"
                     + "\tavatar - changes bot's avatar\n"
                     + "\t\tNote: for this comand to work, you need to attach an image\n"
@@ -127,7 +127,7 @@ public abstract class Operations {
                     + "\twind <time> - winds/rewinds current track\n"
                     + "\tvolume <vol> - changes music volume\n"
                     + "\tloop <true/false> - changes looping a single track\n"
-                    + "\tqueue <track> - add a track to the playlist"
+                    + "\tqueue <track> - add a track to the playlist\n"
                     + "!files <command> [value] - used for controlling files\n"
                     + "\tunload - unloads all the files\n"
                     + "\treload - reloads all the files\n"
@@ -146,8 +146,8 @@ public abstract class Operations {
 
         IMessage msg;
         try {
-            msg = main.mainChannel.sendMessage(main.musicManager.scheduler.getTrackInfo(main.musicManager.scheduler.getCurrentTrack())
-                                   + "\n\nTrack progress:");
+            msg = main.mainChannel.sendMessage(main.musicManager.scheduler.getTrackInfo(
+                    main.musicManager.scheduler.getCurrentTrack()) + "\n\nTrack progress:");
             main.progress = msg;
         } catch(Exception e) {
             e.printStackTrace();
@@ -156,5 +156,6 @@ public abstract class Operations {
         }
 
         main.musicManager.scheduler.updateTrack();
+        main.musicManager.scheduler.updateStatus();
     }
 }

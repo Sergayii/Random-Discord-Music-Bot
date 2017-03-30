@@ -70,8 +70,9 @@ public class Main {
             public void run() {
                 while(main.ready) {
                     main.musicManager.scheduler.updateTrack();
+                    main.musicManager.scheduler.updateStatus();
                     try {
-                        Thread.sleep(2000);
+                        Thread.sleep(3000);
                     } catch(InterruptedException ex) {
                         ex.printStackTrace();
                     }
@@ -137,7 +138,7 @@ public class Main {
 
             reloadMusic();
 
-            if(!music.isEmpty()) {
+            if(!musicManager.scheduler.queue.isEmpty()) {
                 musicManager.scheduler.play(musicManager.scheduler.queue.get(0));
             } else {
                 musicChannel.leave();
@@ -161,23 +162,27 @@ public class Main {
            }
 
            @Override
-           public void playlistLoaded(AudioPlaylist playlist) {
-           }
+           public void playlistLoaded(AudioPlaylist playlist) {}
 
            @Override
-           public void noMatches() {
-               Operations.sendMessage("No track found: " + trackUrl);
-           }
+           public void noMatches() {}
 
            @Override
-           public void loadFailed(FriendlyException exception) {
-               Operations.sendMessage("Loading track " + trackUrl + " failed.");
+           public void loadFailed(FriendlyException ex) {
+               ex.printStackTrace();
            }
        });
     }
 
     public void shutdown() {
         exit("I'm leaving to apply an update, goodbye!");
+        if(progress != null) {
+            try {
+                progress.delete();
+            } catch(Exception ex) {
+                ex.printStackTrace();
+            }
+        }
         System.exit(0);
     }
 
@@ -209,7 +214,7 @@ public class Main {
         t.start();
 
         try {
-            if(exitMessage != null && !exitMessage.equals("")) {
+            if(exitMessage != null && !exitMessage.isEmpty()) {
                 mainChannel.sendMessage(exitMessage);
             }
         } catch(Exception ex) {
