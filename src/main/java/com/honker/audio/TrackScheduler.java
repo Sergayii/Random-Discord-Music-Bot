@@ -137,7 +137,7 @@ public class TrackScheduler extends AudioEventAdapter {
     public String getTrackInfo(AudioTrack track) {
         String trackName = getTrackName(track);
         return "Track name: " + trackName + System.lineSeparator() +
-               "File path: `" + new File(track.getIdentifier()).getAbsolutePath().replace("\\", "/") + "`" + System.lineSeparator() +
+               "File path: `" + track.getIdentifier().replaceFirst("/", "").replace("\\", "/") + "`" + System.lineSeparator() +
                "Duration: " + (track.getDuration() / 1000) + " seconds" + System.lineSeparator() +
                "ID: " + getTrackID(track);
     }
