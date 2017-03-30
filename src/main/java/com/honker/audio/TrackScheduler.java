@@ -65,10 +65,6 @@ public class TrackScheduler extends AudioEventAdapter {
             trackName += getTrackName(currentTrack);
         }
 
-        String oldStatus = main.bot.client.getOurUser().getStatus().getStatusMessage();
-        if(oldStatus != null && oldStatus.equals(trackName)) {
-            return;
-        }
         main.bot.client.changeStatus(Status.game(trackName));
     }
     
@@ -140,7 +136,10 @@ public class TrackScheduler extends AudioEventAdapter {
 
     public String getTrackInfo(AudioTrack track) {
         String trackName = getTrackName(track);
-        return "Track name: " + trackName + System.lineSeparator() + "Duration: " + (track.getDuration() / 1000) + " seconds" + System.lineSeparator() + "ID: " + getTrackID(track);
+        return "Track name: " + trackName + System.lineSeparator() +
+               "File path: `" + new File(track.getIdentifier()).getAbsolutePath().replace("\\", "/") + "`" + System.lineSeparator() +
+               "Duration: " + (track.getDuration() / 1000) + " seconds" + System.lineSeparator() +
+               "ID: " + getTrackID(track);
     }
 
     public int getTrackID(AudioTrack track) {

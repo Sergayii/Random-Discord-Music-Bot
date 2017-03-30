@@ -17,6 +17,8 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import sx.blah.discord.api.events.IListener;
 import sx.blah.discord.handle.impl.events.MessageReceivedEvent;
 import sx.blah.discord.handle.obj.IChannel;
@@ -31,6 +33,7 @@ public class MessageListener implements IListener<MessageReceivedEvent> {
 
     public void command(IChannel chan, IUser user, String msg, String userName, List<Attachment> attachments) throws FileNotFoundException {
         if(msg.length() > main.COMMAND_SYMBOL.length()) {
+            chan.setTypingStatus(true);
             msg = msg.substring(main.COMMAND_SYMBOL.length());
             while(msg.contains("  ")) {
                 msg = msg.replace("  ", " ");
@@ -404,6 +407,7 @@ public class MessageListener implements IListener<MessageReceivedEvent> {
                     }
                 }
             }
+            chan.setTypingStatus(false);
         }
     }
 
@@ -414,13 +418,13 @@ public class MessageListener implements IListener<MessageReceivedEvent> {
         String msg = e.getMessage().getContent();
         String userName = user.getName();
 
-        if(msg.startsWith(main.COMMAND_SYMBOL) && !user.isBot()) {
-            try {
-                if(chan.getID().equals(main.MAIN_CHANNEL_ID)) {
+        if(chan.getID().equals(main.MAIN_CHANNEL_ID)) {
+            if(msg.startsWith(main.COMMAND_SYMBOL) && !user.isBot()) {
+                try {
                     command(chan, user, msg, userName, e.getMessage().getAttachments());
+                } catch(FileNotFoundException ex) {
+                    ex.printStackTrace();
                 }
-            } catch(FileNotFoundException ex) {
-                ex.printStackTrace();
             }
         }
     }

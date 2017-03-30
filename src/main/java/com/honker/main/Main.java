@@ -175,7 +175,6 @@ public class Main {
     }
 
     public void shutdown() {
-        exit("I'm leaving to apply an update, goodbye!");
         if(progress != null) {
             try {
                 progress.delete();
@@ -183,6 +182,8 @@ public class Main {
                 ex.printStackTrace();
             }
         }
+        
+        exit("I'm leaving to apply an update, goodbye!");
         System.exit(0);
     }
 
