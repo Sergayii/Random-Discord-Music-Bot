@@ -51,7 +51,6 @@
 
     <build>
         <plugins>
-            <!-- To create an executable fat JAR when using mvn package -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
@@ -75,7 +74,7 @@
                                     <excludes>
                                         <exclude>META-INF/*.SF</exclude>
                                         <exclude>META-INF/*.RSA</exclude>
-                                        <exclude>META-INF/*.INF</exclude> <!-- This one may not be required -->
+                                        <exclude>META-INF/*.INF</exclude>
                                     </excludes>
                                 </filter>
                             </filters>

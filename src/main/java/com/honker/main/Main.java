@@ -27,51 +27,52 @@ import sx.blah.discord.handle.obj.Status;
 import sx.blah.discord.util.DiscordException;
 
 public class Main {
+    
+    public static Main main;
+    
+    public final String COMMAND_SYMBOL = "!";
+    public String BOT_TOKEN, MAIN_CHANNEL_ID, VOICE_CHANNEL_ID, GUILD_ID, MUSIC_PATH;
 
-    public static final String COMMAND_SYMBOL = "!";
-    public static String BOT_TOKEN, MAIN_CHANNEL_ID, VOICE_CHANNEL_ID, GUILD_ID, MUSIC_PATH;
+    public boolean ready = false, musicPaused = true;
 
-    public static boolean ready = false, musicPaused = true;
+    public IMessage progress;
+    public IChannel mainChannel;
 
-    public static IMessage progress;
-    public static IChannel mainChannel;
+    public MusicManager musicManager;
+    public AudioPlayerManager playerManager;
+    
+    public Bot bot;
 
-    public static MusicManager musicManager;
-    public static AudioPlayerManager playerManager;
-
-    public static UserVar[] users = new UserVar[1000];
-    public static Bot bot;
-
-    public static ArrayList<File> music = new ArrayList<File>();
+    public ArrayList<File> music = new ArrayList<File>();
 
     @EventSubscriber
-    public void onReadyEvent(ReadyEvent e){
-        mainChannel = bot.client.getChannelByID(MAIN_CHANNEL_ID);
+    public void onReadyEvent(ReadyEvent e) {
+        main.mainChannel = main.bot.client.getChannelByID(main.MAIN_CHANNEL_ID);
 
-        playerManager = new DefaultAudioPlayerManager();
-        AudioSourceManagers.registerLocalSource(playerManager);
-        musicManager = new MusicManager(playerManager);
-        
-        IGuild guild = bot.client.getGuildByID(GUILD_ID);
+        main.playerManager = new DefaultAudioPlayerManager();
+        AudioSourceManagers.registerLocalSource(main.playerManager);
+        main.musicManager = new MusicManager(main.playerManager);
+
+        IGuild guild = main.bot.client.getGuildByID(main.GUILD_ID);
         try {
-            guild.getAudioManager().setAudioProvider(musicManager.getAudioProvider());
+            guild.getAudioManager().setAudioProvider(main.musicManager.getAudioProvider());
         } catch(NullPointerException ex) {
             ex.printStackTrace();
         }
 
-        playMusic();
-        
-        ready = true;
-        
+        main.playMusic();
+
+        main.ready = true;
+
         Thread t = new Thread(new Runnable() {
-            
+
             @Override
             public void run() {
-                while(ready) {
-                    musicManager.scheduler.updateTrack();
+                while(main.ready) {
+                    main.musicManager.scheduler.updateTrack();
                     try {
                         Thread.sleep(2000);
-                    } catch (InterruptedException ex) {
+                    } catch(InterruptedException ex) {
                         ex.printStackTrace();
                     }
                 }
@@ -80,35 +81,37 @@ public class Main {
         t.start();
     }
 
-    public static void unloadMusic(){
+    public void unloadMusic() {
         musicManager.scheduler.stop();
         music.clear();
         musicManager.scheduler.queue.clear();
         musicManager.scheduler.setCurrentTrack(null);
     }
-    
-    public static void loadMusic(){
+
+    public void loadMusic() {
         List<String> filesToLoad;
         try {
-            filesToLoad = Files.walk(new File(MUSIC_PATH).toPath()).filter(path->Files.isRegularFile(path)&&!music.contains(path.toFile())).map(path->path.toFile().toString()).collect(Collectors.toList());
-        } catch (IOException ex) {
+            filesToLoad = Files.walk(new File(MUSIC_PATH).toPath()).filter(path -> Files.isRegularFile(path) && !music.contains(path.toFile())).map(path -> path.toFile().toString()).collect(Collectors.toList());
+        } catch(IOException ex) {
             ex.printStackTrace();
             filesToLoad = null;
         }
-        
-        if(filesToLoad != null){
-            for(String fileName : filesToLoad)
+
+        if(filesToLoad != null) {
+            for(String fileName : filesToLoad) {
                 load(fileName);
+            }
             try {
                 Thread.sleep(10000);
-            } catch (InterruptedException ex) {
+            } catch(InterruptedException ex) {
                 ex.printStackTrace();
             }
 
             ArrayList<File> loadedFiles = new ArrayList<File>();
 
-            for(AudioTrack track : musicManager.scheduler.queue)
+            for(AudioTrack track : musicManager.scheduler.queue) {
                 loadedFiles.add(new File(filesToLoad.get(musicManager.scheduler.queue.indexOf(track))));
+            }
 
             music = loadedFiles;
 
@@ -117,14 +120,14 @@ public class Main {
         }
     }
 
-    public static void reloadMusic(){
+    public void reloadMusic() {
         unloadMusic();
         loadMusic();
 
         musicManager.scheduler.resume();
     }
 
-    public static void playMusic(){
+    public void playMusic() {
         IVoiceChannel musicChannel = bot.client.getVoiceChannelByID(VOICE_CHANNEL_ID);
         try {
             musicChannel.leave();
@@ -134,92 +137,88 @@ public class Main {
 
             reloadMusic();
 
-            if(!music.isEmpty()){
+            if(!music.isEmpty()) {
                 musicManager.scheduler.play(musicManager.scheduler.queue.get(0));
-            } else
+            } else {
                 musicChannel.leave();
+            }
 
             musicManager.player.setVolume(100);
             musicManager.player.setPaused(false);
-            
+
             musicPaused = false;
-        } catch (Exception ex) {
+        } catch(Exception ex) {
             ex.printStackTrace();
         }
     }
 
-    public static void load(String trackUrl){
+    public void load(String trackUrl) {
         playerManager.loadItem(trackUrl, new AudioLoadResultHandler() {
 
-            @Override
-            public void trackLoaded(AudioTrack track) {
-                musicManager.scheduler.queue(track);
-            }
+           @Override
+           public void trackLoaded(AudioTrack track) {
+               musicManager.scheduler.queue(track);
+           }
 
-            @Override
-            public void playlistLoaded(AudioPlaylist playlist) {}
+           @Override
+           public void playlistLoaded(AudioPlaylist playlist) {
+           }
 
-            @Override
-            public void noMatches() {
-                Operations.sendMessage(mainChannel, "No track found: " + trackUrl);
-            }
+           @Override
+           public void noMatches() {
+               Operations.sendMessage("No track found: " + trackUrl);
+           }
 
-            @Override
-            public void loadFailed(FriendlyException exception) {
-                Operations.sendMessage(mainChannel, "Loading track " + trackUrl + " failed.");
-            }
-        });
+           @Override
+           public void loadFailed(FriendlyException exception) {
+               Operations.sendMessage("Loading track " + trackUrl + " failed.");
+           }
+       });
     }
 
-    public static void queue(AudioTrack track){
-        musicManager.scheduler.queue(track);
-    }
-
-    public static boolean play(AudioTrack track){
-        return musicManager.scheduler.play(track);
-    }
-
-    public static void shutdown(){
+    public void shutdown() {
         exit("I'm leaving to apply an update, goodbye!");
         System.exit(0);
     }
 
-    public static void restart() {
+    public void restart() {
         exit("Restarting");
         join();
     }
 
-    public static void exit(){
+    public void exit() {
         exit("");
     }
 
-    public static void exit(String exitMessage){
+    public void exit(String exitMessage) {
         bot.client.changeStatus(Status.empty());
-        
+
         List<IVoiceChannel> voiceChannels = bot.client.getConnectedVoiceChannels();
-        
-        Thread t = new Thread(new Runnable(){
-            
+
+        Thread t = new Thread(new Runnable() {
+
             @Override
-            public void run(){
-                for(IVoiceChannel channel : voiceChannels){
-                    if(channel.isConnected())
+            public void run() {
+                for(IVoiceChannel channel : voiceChannels) {
+                    if(channel.isConnected()) {
                         channel.leave();
+                    }
                 }
             }
         });
         t.start();
 
         try {
-            if(exitMessage != null && !exitMessage.equals(""))
+            if(exitMessage != null && !exitMessage.equals("")) {
                 mainChannel.sendMessage(exitMessage);
-        } catch (Exception ex) {
+            }
+        } catch(Exception ex) {
             ex.printStackTrace();
         }
 
         try {
             bot.client.logout();
-        } catch (Exception ex) {
+        } catch(Exception ex) {
             ex.printStackTrace();
         }
 
@@ -227,14 +226,14 @@ public class Main {
         ready = false;
     }
 
-    public static void join() {
+    public void join() {
         bot = new Bot();
     }
 
-    public static void main(String[] args) throws DiscordException, InterruptedException, FileNotFoundException, NoSuchFieldException {
+    public void init() throws DiscordException, InterruptedException, FileNotFoundException {
         Scanner settingsReader = new Scanner(new File("./settings.txt"));
         StringBuilder string = new StringBuilder();
-        while(settingsReader.hasNext()){
+        while(settingsReader.hasNext()) {
             String line = settingsReader.nextLine();
             string.append(line);
             string.append(System.lineSeparator());
@@ -244,21 +243,27 @@ public class Main {
         ArrayList<String> settings = new ArrayList<String>();
         settings.addAll(Arrays.asList(settingsList));
 
-        for(String setting : settings){
-            if(setting.startsWith("BOT_TOKEN = "))
+        for(String setting : settings) {
+            if(setting.startsWith("BOT_TOKEN = ")) {
                 BOT_TOKEN = setting.replaceFirst("BOT_TOKEN = ", "");
-            else if(setting.startsWith("MAIN_CHANNEL_ID = "))
+            } else if(setting.startsWith("MAIN_CHANNEL_ID = ")) {
                 MAIN_CHANNEL_ID = setting.replaceFirst("MAIN_CHANNEL_ID = ", "");
-            else if(setting.startsWith("VOICE_CHANNEL_ID = "))
+            } else if(setting.startsWith("VOICE_CHANNEL_ID = ")) {
                 VOICE_CHANNEL_ID = setting.replaceFirst("VOICE_CHANNEL_ID = ", "");
-            else if(setting.startsWith("GUILD_ID = "))
+            } else if(setting.startsWith("GUILD_ID = ")) {
                 GUILD_ID = setting.replaceFirst("GUILD_ID = ", "");
-            else if(setting.startsWith("MUSIC_PATH = "))
+            } else if(setting.startsWith("MUSIC_PATH = ")) {
                 MUSIC_PATH = setting.replaceFirst("MUSIC_PATH = ", "");
-            else
+            } else {
                 throw new IllegalArgumentException("No such setting");
+            }
         }
-
+        
         join();
+    }
+    
+    public static void main(String[] args) throws DiscordException, InterruptedException, FileNotFoundException {
+        main = new Main();
+        main.init();
     }
 }

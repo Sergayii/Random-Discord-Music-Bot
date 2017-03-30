@@ -1,105 +1,101 @@
 package com.honker.main;
 
-import static com.honker.main.Main.bot;
-import static com.honker.main.Main.musicManager;
-import static com.honker.main.Main.progress;
-import static com.honker.main.Main.users;
+import static com.honker.main.Main.main;
+
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.util.List;
-import sx.blah.discord.handle.obj.IChannel;
+import java.io.PrintWriter;
 import sx.blah.discord.handle.obj.IMessage;
-import sx.blah.discord.handle.obj.IUser;
 
 public abstract class Operations {
-    
-    public static String[] marks = new String[]{"!", "#", "$", "%", "^", "&", "*", "(", ")", "+", "=", "-", "<", ">", ",", ".", ":", ";", "@", "?", "\n"};
-    
-    public static void sendFile(IChannel chan, String message, File file){
-        try{
-            chan.sendFile(message, file);
-        } catch(Exception e){
-            e.printStackTrace();
-        }
-    }
-    
-    public static void sendFile(IChannel chan,  File file){
-        try{
-            chan.sendFile(file);
-        } catch(Exception e){
-            e.printStackTrace();
-        }
-    }
-    
-    public static void sendFile(IChannel chan, String message, String path){
-        try{
-            chan.sendFile(message, false, Operations.class.getResourceAsStream(path), "Image.png");
-        } catch(Exception e){
-            e.printStackTrace();
-        }
-    }
-    
-    public static void sendFile(IChannel chan, String path){
-        try{
-            chan.sendFile("", false, Operations.class.getResourceAsStream(path), "Image.png");
-        } catch(Exception e){
-            e.printStackTrace();
-        }
-    }
-    
-    public static void sendMessage(IChannel chan, String msg){
-        try{
-            chan.sendMessage(msg);
-        } catch(Exception e){
-            e.printStackTrace();
-        }
-    }
-    
-    public static void sendCommandDone(IChannel chan){
-        sendMessage(chan, "Command done!");
-    }
-    
-    public static void sendCommandInProgress(IChannel chan){
-        sendMessage(chan, "Command in progress");
-    }
-    
-    public static void sendCommandFailed(IChannel chan, String cause){
-        sendMessage(chan, "Command failed: " + cause);
-    }
-    
-    public static void sendTracksList(IChannel chan){
+
+    public static String[] marks = new String[] {"!", "#", "$", "%", "^", "&", "*", "(", ")", "+", "=", "-", "<", ">", ",", ".", ":", ";", "@", "?", "\n"};
+
+    public static void sendFile(String message, File file) {
         try {
-            if(musicManager.scheduler.queue.isEmpty()) {
-                sendMessage(chan, "The playlist is empty");
+            main.mainChannel.sendFile(message, file);
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void sendFile(File file) {
+        try {
+            main.mainChannel.sendFile(file);
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void sendFile(String message, String path) {
+        try {
+            main.mainChannel.sendFile(message, false, Operations.class.getResourceAsStream(path), "Image.png");
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void sendFile(String path) {
+        try {
+            main.mainChannel.sendFile("", false, Operations.class.getResourceAsStream(path), "Image.png");
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void sendMessage(String msg) {
+        try {
+            main.mainChannel.sendMessage(msg);
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void sendCommandDone() {
+        sendMessage("Command done!");
+    }
+
+    public static void sendCommandInProgress() {
+        sendMessage("Command in progress");
+    }
+
+    public static void sendCommandFailed(String cause) {
+        sendMessage("Command failed: " + cause);
+    }
+
+    public static void sendTracksList() {
+        try {
+            if(main.musicManager.scheduler.queue.isEmpty()) {
+                sendMessage("The playlist is empty");
+                return;
+            }
+
+            String list = "";
+            for(AudioTrack track : main.musicManager.scheduler.queue) {
+                list += main.musicManager.scheduler.getShortenedTrackInfo(track) + System.lineSeparator();
+            }
+            
+            if(list.length() <= 1000) {
+                sendMessage("Tracks list:\n" + list);
                 return;
             }
             
             File file = File.createTempFile("musicList", ".txt");
-            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file)));
-            
-            for(AudioTrack track : musicManager.scheduler.queue){
-                writer.write(musicManager.scheduler.getShortenedTrackInfo(track));
-                writer.newLine();
-                writer.flush();
-            }
-            
-            sendFile(chan, "There's just too much tracks, i'll send the playlist in this file", file);
-        } catch (IOException ex) {
+            PrintWriter writer = new PrintWriter(file);
+
+            writer.print(list);
+            writer.flush();
+
+            sendFile("There's just too much tracks, i'll send the playlist in this file", file);
+        } catch(IOException ex) {
             ex.printStackTrace();
         }
     }
-    
-    public static void sendHelp(IChannel chan){
-        sendMessage(chan,
-                    "What means what:\n```\n"
-                    + "<arg> - what you must enter\n"
-                    + "[arg] - what is optional to enter\n\n"
-                    + "```\n\n"
-                    + "Main commands:\n```\n"
+
+    public static void sendHelp() {
+        sendMessage(
+                      "Main commands:\n```\n"
                     + "!help - shows help\n"
                     + "!track - sends current track name and ID\n"
                     + "!playlist - sends the playlist\n"
@@ -120,6 +116,8 @@ public abstract class Operations {
                     + "\tplay - plays a random track from the playlist\n"
                     + "\tnext - plays next track from the playlist\n"
                     + "\tprevious - plays previous track from the playlist\n"
+                    + "\tleave - leaves the music voice channel\n"
+                    + "\tjoin - joins the music voice channel\n"
                     + "\trejoin - rejoins to music voice channel\n"
                     + "\treplay - replays current track\n"
                     + "\tshuffle - shuffles playlist\n"
@@ -133,47 +131,30 @@ public abstract class Operations {
                     + "!files <command> [value] - used for controlling files\n"
                     + "\tunload - unloads all the files\n"
                     + "\treload - reloads all the files\n"
-                    + "```");
+                    + "```"
+        );
     }
-    
-    public static void sendProgress(IChannel chan) {
-        if(progress != null) {
+
+    public static void sendProgress() {
+        if(main.progress != null) {
             try {
-                progress.delete();
-            } catch (Exception ex) {
+                main.progress.delete();
+            } catch(Exception ex) {
                 ex.printStackTrace();
             }
         }
-        
+
         IMessage msg;
         try {
-            msg = chan.sendMessage(musicManager.scheduler.getTrackInfo(musicManager.scheduler.getCurrentTrack()) + "\n\nTrack progress:");
-            progress = msg;
-        } catch(Exception e){
+            msg = main.mainChannel.sendMessage(main.musicManager.scheduler.getTrackInfo(main.musicManager.scheduler.getCurrentTrack())
+                                   + "\n\nTrack progress:");
+            main.progress = msg;
+        } catch(Exception e) {
             e.printStackTrace();
-            progress = null;
+            main.progress = null;
             return;
         }
-        
-        musicManager.scheduler.updateTrack();
-    }
-    
-    public static UserVar findUser(IUser user){
-        for(UserVar userVar : users){
-            if(userVar.user.equals(user))
-                return userVar;
-        }
-        return null;
-    }
-    
-    public static void updateUsers(){
-        List<IUser> usersList = bot.client.getUsers();
-        
-        int a = 0;
-        for(IUser user : usersList){
-            if(!user.equals(bot.user))
-                users[a] = new UserVar(user);
-            a += 1;
-        }
+
+        main.musicManager.scheduler.updateTrack();
     }
 }
