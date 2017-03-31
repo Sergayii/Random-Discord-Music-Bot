@@ -9,8 +9,6 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason;
 import java.util.ArrayList;
 import java.util.Random;
 
-import static com.honker.main.Operations.sendProgress;
-
 import java.io.File;
 import java.util.Collections;
 import java.util.HashSet;
@@ -19,8 +17,6 @@ import sx.blah.discord.handle.obj.Status;
 import sx.blah.discord.util.DiscordException;
 import sx.blah.discord.util.MissingPermissionsException;
 import sx.blah.discord.util.RateLimitException;
-
-import static com.honker.main.Operations.sendMessage;
 
 public class TrackScheduler extends AudioEventAdapter {
 
@@ -37,20 +33,20 @@ public class TrackScheduler extends AudioEventAdapter {
 
     public void resume() {
         player.setPaused(false);
-        main.musicPaused = false;
+        main.setMusicPaused(false);
         updateStatus();
     }
     
     public void pause() {
         player.setPaused(true);
-        main.musicPaused = true;
+        main.setMusicPaused(true);
         updateStatus();
     }
 
     public void stop() {
         player.stopTrack();
         currentTrack = null;
-        main.musicPaused = true;
+        main.setMusicPaused(true);
         updateStatus();
     }
 
@@ -59,24 +55,24 @@ public class TrackScheduler extends AudioEventAdapter {
         if(currentTrack == null || queue.isEmpty()) {
             trackName = "nothing";
         } else {
-            if(main.musicPaused || player.isPaused()) {
-                trackName = String.valueOf('\u25ae') + String.valueOf('\u25ae') + " ";
+            if(main.isMusicPaused() || player.isPaused()) {
+                trackName = "\u25ae\u25ae ";
             }
             trackName += getTrackName(currentTrack);
         }
 
-        main.bot.client.changeStatus(Status.game(trackName));
+        main.getBot().getClient().changeStatus(Status.game(trackName));
     }
     
     public boolean playNoMessage(AudioTrack track) {
-        if(main.progress != null) {
+        if(main.getProgress() != null) {
             try {
-                main.progress.delete();
+                main.getProgress().delete();
             } catch(MissingPermissionsException | RateLimitException | DiscordException ex) {
                 ex.printStackTrace();
             }
         }
-        main.progress = null;
+        main.setProgress(null);
 
         resume();
 
@@ -95,7 +91,7 @@ public class TrackScheduler extends AudioEventAdapter {
             return true;
         } else {
             try {
-                main.music.remove(main.music.indexOf(new File(track.getIdentifier())));
+                main.getMusic().remove(main.getMusic().indexOf(new File(track.getIdentifier())));
                 queue.remove(queue.indexOf(track));
             } catch(Exception e) {}
 
@@ -106,7 +102,7 @@ public class TrackScheduler extends AudioEventAdapter {
     public boolean play(AudioTrack track) {
         boolean bool = playNoMessage(track);
 
-        sendProgress();
+        main.getBot().sendProgress();
 
         return bool;
     }
@@ -155,9 +151,9 @@ public class TrackScheduler extends AudioEventAdapter {
     public void sendCurrentPlayingTrack() {
         try {
             if(getCurrentTrack() != null) {
-                sendProgress();
+                main.getBot().sendProgress();
             } else {
-                sendMessage("No track is playing right now");
+                main.getBot().sendMessage("No track is playing right now");
             }
         } catch(Exception ex) {
             ex.printStackTrace();
@@ -166,13 +162,13 @@ public class TrackScheduler extends AudioEventAdapter {
 
     public void shuffleMusic() {
         sortMusic();
-        Collections.shuffle(main.music);
+        Collections.shuffle(main.getMusic());
     }
 
     public void sortMusic() {
-        HashSet<File> newMusic = new HashSet<File>(main.music);
-        main.music = new ArrayList<File>(newMusic);
-        Collections.sort(main.music);
+        HashSet<File> newMusic = new HashSet<File>(main.getMusic());
+        main.setMusic(new ArrayList<File>(newMusic));
+        Collections.sort(main.getMusic());
     }
 
     public void shufflePlaylist() {
@@ -201,7 +197,7 @@ public class TrackScheduler extends AudioEventAdapter {
         stop();
         queue.clear();
         try {
-            main.progress.delete();
+            main.getProgress().delete();
         } catch(Exception ex) {
             ex.printStackTrace();
         }
@@ -265,7 +261,7 @@ public class TrackScheduler extends AudioEventAdapter {
     }
 
     public void updateTrack() {
-        if(!main.ready || main.musicPaused || main.progress == null || currentTrack == null) {
+        if(!main.isReady() || main.isMusicPaused() || main.getProgress() == null || currentTrack == null) {
             return;
         }
 
@@ -291,7 +287,7 @@ public class TrackScheduler extends AudioEventAdapter {
         String msg = getTrackInfo(getCurrentTrack()) + "\n\nTrack progress:\n";
         
         for(int a = 0; a < per; a++) {
-            msg += String.valueOf('\u25a0');
+            msg += "\u25a0";
         }
         
         if(per * scale == 0) {
@@ -303,8 +299,8 @@ public class TrackScheduler extends AudioEventAdapter {
         msg += " (" + pos + " seconds)";
         
         try {
-            if(main.progress != null) {
-                main.progress.edit(msg);
+            if(main.getProgress() != null) {
+                main.getProgress().edit(msg);
             }
         } catch(Exception ex) {
             ex.printStackTrace();
@@ -312,12 +308,12 @@ public class TrackScheduler extends AudioEventAdapter {
     }
     
     public void joinMusicChannel() throws MissingPermissionsException {
-        IVoiceChannel musicChannel = main.bot.client.getVoiceChannelByID(main.VOICE_CHANNEL_ID);
+        IVoiceChannel musicChannel = main.getBot().getClient().getVoiceChannelByID(main.getVoiceChannelID());
         musicChannel.join();
     }
     
     public void leaveMusicChannel() {
-        IVoiceChannel musicChannel = main.bot.client.getVoiceChannelByID(main.VOICE_CHANNEL_ID);
+        IVoiceChannel musicChannel = main.getBot().getClient().getVoiceChannelByID(main.getVoiceChannelID());
         musicChannel.leave();
     }
     
@@ -337,7 +333,7 @@ public class TrackScheduler extends AudioEventAdapter {
             Thread.sleep(1000);
             if(endReason.mayStartNext) {
                 if(looping) {
-                    sendMessage("Track ended, replaying it");
+                    main.getBot().sendMessage("Track ended, replaying it");
                     playNoMessage(currentTrack);
                 } else if(random) {
                     playRandomTrack();
@@ -347,9 +343,9 @@ public class TrackScheduler extends AudioEventAdapter {
             } else if(endReason == AudioTrackEndReason.FINISHED) {
                 stop();
             } else if(endReason == AudioTrackEndReason.LOAD_FAILED) {
-                sendMessage("Hmmm, something went wrong with playing music, i'll rejoin!");
+                main.getBot().sendMessage("Hmmm, something went wrong with playing music, i'll rejoin!");
                 rejoinMusicChannel();
-                sendMessage("Ok, i'll play another track now.");
+                main.getBot().sendMessage("Ok, i'll play another track now.");
             }
         } catch(Exception ex) {
             ex.printStackTrace();
@@ -359,7 +355,7 @@ public class TrackScheduler extends AudioEventAdapter {
     @Override
     public void onTrackStuck(AudioPlayer player, AudioTrack track, long thresholdMs) {
         try {
-            sendMessage("Track got stuck, let's start another one!");
+            main.getBot().sendMessage("Track got stuck, let's start another one!");
             nextTrack();
         } catch(Exception ex) {
             ex.printStackTrace();

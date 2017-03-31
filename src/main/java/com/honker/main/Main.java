@@ -30,47 +30,165 @@ public class Main {
     
     public static Main main;
     
-    public final String COMMAND_SYMBOL = "!";
-    public String BOT_TOKEN, MAIN_CHANNEL_ID, VOICE_CHANNEL_ID, GUILD_ID, MUSIC_PATH;
+    public final String[] marks = new String[] {"!", "#", "$", "%", "^", "&", "*", "(", ")", "+", "=", "-", "<", ">", ",", ".", ":", ";", "@", "?", "\n"};
+    private String COMMAND_SYMBOL = "!";
 
-    public boolean ready = false, musicPaused = true;
+    private String BOT_TOKEN;
+    private String MAIN_CHANNEL_ID;
+    private String VOICE_CHANNEL_ID;
+    private String GUILD_ID;
+    private String MUSIC_PATH;
 
-    public IMessage progress;
-    public IChannel mainChannel;
-
-    public MusicManager musicManager;
-    public AudioPlayerManager playerManager;
+    private boolean ready = false;
+    private boolean musicPaused = true;
     
-    public Bot bot;
+    private IMessage progress;
+    private IChannel mainChannel;
+    
+    private MusicManager musicManager;
+    private AudioPlayerManager playerManager;
+    
+    private Bot bot;
+    private ArrayList<File> music = new ArrayList<File>();
 
-    public ArrayList<File> music = new ArrayList<File>();
+    public String getCommandSymbol() {
+        return COMMAND_SYMBOL;
+    }
 
+    public void setCommandSymbol(String commandSymbol) {
+        this.COMMAND_SYMBOL = commandSymbol;
+    }
+
+    public String getBotToken() {
+        return BOT_TOKEN;
+    }
+
+    public void setBotToken(String botToken) {
+        this.BOT_TOKEN = botToken;
+    }
+
+    public String getMainChannelID() {
+        return MAIN_CHANNEL_ID;
+    }
+
+    public void setMainChannelID(String MainChannelID) {
+        this.MAIN_CHANNEL_ID = MainChannelID;
+    }
+
+    public String getVoiceChannelID() {
+        return VOICE_CHANNEL_ID;
+    }
+
+    public void setVoiceChannelID(String VoiceChannelID) {
+        this.VOICE_CHANNEL_ID = VoiceChannelID;
+    }
+
+    public String getGuildID() {
+        return GUILD_ID;
+    }
+
+    public void setGuildID(String GuildID) {
+        this.GUILD_ID = GuildID;
+    }
+
+    public String getMusicPath() {
+        return MUSIC_PATH;
+    }
+
+    public void setMusicPath(String MusicPath) {
+        this.MUSIC_PATH = MusicPath;
+    }
+
+    public boolean isReady() {
+        return ready;
+    }
+
+    public void setReady(boolean ready) {
+        this.ready = ready;
+    }
+
+    public boolean isMusicPaused() {
+        return musicPaused;
+    }
+
+    public void setMusicPaused(boolean musicPaused) {
+        this.musicPaused = musicPaused;
+    }
+
+    public IMessage getProgress() {
+        return progress;
+    }
+
+    public void setProgress(IMessage progress) {
+        this.progress = progress;
+    }
+
+    public IChannel getMainChannel() {
+        return mainChannel;
+    }
+
+    public void setMainChannel(IChannel mainChannel) {
+        this.mainChannel = mainChannel;
+    }
+
+    public MusicManager getMusicManager() {
+        return musicManager;
+    }
+
+    public void setMusicManager(MusicManager musicManager) {
+        this.musicManager = musicManager;
+    }
+
+    public AudioPlayerManager getPlayerManager() {
+        return playerManager;
+    }
+
+    public void setPlayerManager(AudioPlayerManager playerManager) {
+        this.playerManager = playerManager;
+    }
+
+    public Bot getBot() {
+        return bot;
+    }
+
+    public void setBot(Bot bot) {
+        this.bot = bot;
+    }
+
+    public ArrayList<File> getMusic() {
+        return music;
+    }
+
+    public void setMusic(ArrayList<File> music) {
+        this.music = music;
+    }
+    
     @EventSubscriber
     public void onReadyEvent(ReadyEvent e) {
-        main.mainChannel = main.bot.client.getChannelByID(main.MAIN_CHANNEL_ID);
+        main.setMainChannel(main.getBot().getClient().getChannelByID(main.getMainChannelID()));
 
-        main.playerManager = new DefaultAudioPlayerManager();
-        AudioSourceManagers.registerLocalSource(main.playerManager);
-        main.musicManager = new MusicManager(main.playerManager);
+        main.setPlayerManager(new DefaultAudioPlayerManager());
+        AudioSourceManagers.registerLocalSource(main.getPlayerManager());
+        main.setMusicManager(new MusicManager(main.getPlayerManager()));
 
-        IGuild guild = main.bot.client.getGuildByID(main.GUILD_ID);
+        IGuild guild = main.getBot().getClient().getGuildByID(main.getGuildID());
         try {
-            guild.getAudioManager().setAudioProvider(main.musicManager.getAudioProvider());
+            guild.getAudioManager().setAudioProvider(main.getMusicManager().getAudioProvider());
         } catch(NullPointerException ex) {
             ex.printStackTrace();
         }
 
         main.playMusic();
 
-        main.ready = true;
+        main.setReady(true);
 
         Thread t = new Thread(new Runnable() {
 
             @Override
             public void run() {
-                while(main.ready) {
-                    main.musicManager.scheduler.updateTrack();
-                    main.musicManager.scheduler.updateStatus();
+                while(main.isReady()) {
+                    main.getMusicManager().getScheduler().updateTrack();
+                    main.getMusicManager().getScheduler().updateStatus();
                     try {
                         Thread.sleep(3000);
                     } catch(InterruptedException ex) {
@@ -83,16 +201,16 @@ public class Main {
     }
 
     public void unloadMusic() {
-        musicManager.scheduler.stop();
-        music.clear();
-        musicManager.scheduler.queue.clear();
-        musicManager.scheduler.setCurrentTrack(null);
+        getMusicManager().getScheduler().stop();
+        getMusic().clear();
+        getMusicManager().getScheduler().queue.clear();
+        getMusicManager().getScheduler().setCurrentTrack(null);
     }
 
     public void loadMusic() {
         List<String> filesToLoad;
         try {
-            filesToLoad = Files.walk(new File(MUSIC_PATH).toPath()).filter(path -> Files.isRegularFile(path) && !music.contains(path.toFile())).map(path -> path.toFile().toString()).collect(Collectors.toList());
+            filesToLoad = Files.walk(new File(getMusicPath()).toPath()).filter(path -> Files.isRegularFile(path) && !music.contains(path.toFile())).map(path -> path.toFile().toString()).collect(Collectors.toList());
         } catch(IOException ex) {
             ex.printStackTrace();
             filesToLoad = null;
@@ -110,14 +228,14 @@ public class Main {
 
             ArrayList<File> loadedFiles = new ArrayList<File>();
 
-            for(AudioTrack track : musicManager.scheduler.queue) {
-                loadedFiles.add(new File(filesToLoad.get(musicManager.scheduler.queue.indexOf(track))));
+            for(AudioTrack track : getMusicManager().getScheduler().queue) {
+                loadedFiles.add(new File(filesToLoad.get(getMusicManager().getScheduler().queue.indexOf(track))));
             }
 
-            music = loadedFiles;
+            setMusic(loadedFiles);
 
-            musicManager.scheduler.sortMusic();
-            musicManager.scheduler.shufflePlaylist();
+            getMusicManager().getScheduler().sortMusic();
+            getMusicManager().getScheduler().shufflePlaylist();
         }
     }
 
@@ -125,40 +243,40 @@ public class Main {
         unloadMusic();
         loadMusic();
 
-        musicManager.scheduler.resume();
+        getMusicManager().getScheduler().resume();
     }
 
     public void playMusic() {
-        IVoiceChannel musicChannel = bot.client.getVoiceChannelByID(VOICE_CHANNEL_ID);
+        IVoiceChannel musicChannel = getBot().getClient().getVoiceChannelByID(getVoiceChannelID());
         try {
             musicChannel.leave();
             Thread.sleep(3000);
             musicChannel.join();
-            musicManager.player.setPaused(true);
+            getMusicManager().getPlayer().setPaused(true);
 
             reloadMusic();
 
-            if(!musicManager.scheduler.queue.isEmpty()) {
-                musicManager.scheduler.play(musicManager.scheduler.queue.get(0));
+            if(!musicManager.getScheduler().queue.isEmpty()) {
+                getMusicManager().getScheduler().play(getMusicManager().getScheduler().queue.get(0));
             } else {
                 musicChannel.leave();
             }
 
-            musicManager.player.setVolume(100);
-            musicManager.player.setPaused(false);
+            getMusicManager().getPlayer().setVolume(100);
+            getMusicManager().getPlayer().setPaused(false);
 
-            musicPaused = false;
+            setMusicPaused(false);
         } catch(Exception ex) {
             ex.printStackTrace();
         }
     }
 
     public void load(String trackUrl) {
-        playerManager.loadItem(trackUrl, new AudioLoadResultHandler() {
+        getPlayerManager().loadItem(trackUrl, new AudioLoadResultHandler() {
 
            @Override
            public void trackLoaded(AudioTrack track) {
-               musicManager.scheduler.queue(track);
+                getMusicManager().getScheduler().queue(track);
            }
 
            @Override
@@ -175,9 +293,9 @@ public class Main {
     }
 
     public void shutdown() {
-        if(progress != null) {
+        if(getProgress() != null) {
             try {
-                progress.delete();
+                getProgress().delete();
             } catch(Exception ex) {
                 ex.printStackTrace();
             }
@@ -197,9 +315,9 @@ public class Main {
     }
 
     public void exit(String exitMessage) {
-        bot.client.changeStatus(Status.empty());
+        getBot().getClient().changeStatus(Status.empty());
 
-        List<IVoiceChannel> voiceChannels = bot.client.getConnectedVoiceChannels();
+        List<IVoiceChannel> voiceChannels = getBot().getClient().getConnectedVoiceChannels();
 
         Thread t = new Thread(new Runnable() {
 
@@ -216,24 +334,24 @@ public class Main {
 
         try {
             if(exitMessage != null && !exitMessage.isEmpty()) {
-                mainChannel.sendMessage(exitMessage);
+                getMainChannel().sendMessage(exitMessage);
             }
         } catch(Exception ex) {
             ex.printStackTrace();
         }
 
         try {
-            bot.client.logout();
+            getBot().getClient().logout();
         } catch(Exception ex) {
             ex.printStackTrace();
         }
 
-        musicPaused = true;
-        ready = false;
+        setMusicPaused(true);
+        setReady(false);
     }
 
     public void join() {
-        bot = new Bot();
+        setBot(new Bot());
     }
 
     public void init() throws DiscordException, InterruptedException, FileNotFoundException {
@@ -251,15 +369,15 @@ public class Main {
 
         for(String setting : settings) {
             if(setting.startsWith("BOT_TOKEN = ")) {
-                BOT_TOKEN = setting.replaceFirst("BOT_TOKEN = ", "");
+                setBotToken(setting.replaceFirst("BOT_TOKEN = ", ""));
             } else if(setting.startsWith("MAIN_CHANNEL_ID = ")) {
-                MAIN_CHANNEL_ID = setting.replaceFirst("MAIN_CHANNEL_ID = ", "");
+                setMainChannelID(setting.replaceFirst("MAIN_CHANNEL_ID = ", ""));
             } else if(setting.startsWith("VOICE_CHANNEL_ID = ")) {
-                VOICE_CHANNEL_ID = setting.replaceFirst("VOICE_CHANNEL_ID = ", "");
+                setVoiceChannelID(setting.replaceFirst("VOICE_CHANNEL_ID = ", ""));
             } else if(setting.startsWith("GUILD_ID = ")) {
-                GUILD_ID = setting.replaceFirst("GUILD_ID = ", "");
+                setGuildID(setting.replaceFirst("GUILD_ID = ", ""));
             } else if(setting.startsWith("MUSIC_PATH = ")) {
-                MUSIC_PATH = setting.replaceFirst("MUSIC_PATH = ", "");
+                setMusicPath(setting.replaceFirst("MUSIC_PATH = ", ""));
             } else {
                 throw new IllegalArgumentException("No such setting");
             }

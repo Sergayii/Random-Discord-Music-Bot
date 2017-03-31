@@ -1,13 +1,5 @@
 package com.honker.listeners;
 
-import static com.honker.main.Operations.sendCommandDone;
-import static com.honker.main.Operations.sendCommandFailed;
-import static com.honker.main.Operations.sendCommandInProgress;
-import static com.honker.main.Operations.sendFile;
-import static com.honker.main.Operations.sendHelp;
-import static com.honker.main.Operations.sendMessage;
-import static com.honker.main.Operations.sendTracksList;
-
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -30,9 +22,9 @@ import static com.honker.main.Main.main;
 public class MessageListener implements IListener<MessageReceivedEvent> {
 
     public void command(IChannel chan, IUser user, String msg, String userName, List<Attachment> attachments) throws FileNotFoundException {
-        if(msg.length() > main.COMMAND_SYMBOL.length()) {
+        if(msg.length() > main.getCommandSymbol().length()) {
             chan.setTypingStatus(true);
-            msg = msg.substring(main.COMMAND_SYMBOL.length());
+            msg = msg.substring(main.getCommandSymbol().length());
             while(msg.contains("  ")) {
                 msg = msg.replace("  ", " ");
             }
@@ -42,34 +34,34 @@ public class MessageListener implements IListener<MessageReceivedEvent> {
             
             if(cmd[0].equals("help")) {
                 if(cmd.length == 1) {
-                    sendHelp();
+                    main.getBot().sendHelp();
                 }
             } else if(cmd[0].equals("track")) {
                 if(cmd.length == 1) {
-                    if(!main.ready) {
-                        sendCommandFailed("The music isn't even started yet!!!");
+                    if(!main.isReady()) {
+                        main.getBot().sendCommandFailed("The music isn't even started yet!!!");
                     } else {
-                        main.musicManager.scheduler.sendCurrentPlayingTrack();
+                        main.getMusicManager().getScheduler().sendCurrentPlayingTrack();
                     }
                 }
             } else if(cmd[0].equals("playlist")) {
                 if(cmd.length == 1) {
-                    if(!main.ready) {
-                        sendCommandFailed("The music isn't even started yet!!!");
+                    if(!main.isReady()) {
+                        main.getBot().sendCommandFailed("The music isn't even started yet!!!");
                     } else {
-                        sendTracksList();
+                        main.getBot().sendTracksList();
                     }
                 }
             } else if(cmd[0].equals("search")) {
                 if(cmd.length > 1) {
-                    if(main.ready) {
+                    if(main.isReady()) {
                         cmd = msgL.split(" ", 2);
 
                         ArrayList<File> results = new ArrayList<File>();
                         String search = cmd[1];
-                        for(File file : main.music) {
-                            AudioTrack track = main.musicManager.scheduler.queue.get(main.music.indexOf(file));
-                            String trackName = main.musicManager.scheduler.getTrackName(track).toLowerCase();
+                        for(File file : main.getMusic()) {
+                            AudioTrack track = main.getMusicManager().getScheduler().queue.get(main.getMusic().indexOf(file));
+                            String trackName = main.getMusicManager().getScheduler().getTrackName(track).toLowerCase();
                             if(trackName.contains(search)) {
                                 results.add(file);
                             }
@@ -77,18 +69,18 @@ public class MessageListener implements IListener<MessageReceivedEvent> {
 
                         ArrayList<AudioTrack> tracks = new ArrayList<AudioTrack>();
                         for(File file : results) {
-                            tracks.add(main.musicManager.scheduler.queue.get(main.music.indexOf(file)));
+                            tracks.add(main.getMusicManager().getScheduler().queue.get(main.getMusic().indexOf(file)));
                         }
 
                         String answer = new String();
                         for(AudioTrack track : tracks) {
-                            answer += main.musicManager.scheduler.getTrackInfo(track) + 
+                            answer += main.getMusicManager().getScheduler().getTrackInfo(track) + 
                                       System.lineSeparator() + System.lineSeparator();
                         }
 
                         if(!answer.equals("")) {
                             if(answer.length() <= 1900) {
-                                sendMessage("This is what i've found:\n" + answer);
+                                main.getBot().sendMessage("This is what i've found:\n" + answer);
                             } else {
                                 File file;
                                 try {
@@ -110,34 +102,34 @@ public class MessageListener implements IListener<MessageReceivedEvent> {
                                     }
 
                                     if(file != null) {
-                                        sendFile("There's just too much tracks, i'll send them in a file", file);
+                                        main.getBot().sendFile("There's just too much tracks, i'll send them in a file", file);
                                     } else {
-                                        sendMessage("Something broke, and i can't send the result");
+                                        main.getBot().sendMessage("Something broke, and i can't send the result");
                                     }
                                 }
                             }
                         } else {
-                            sendMessage("I found nothing!");
+                            main.getBot().sendMessage("I found nothing!");
                         }
                     } else {
-                        sendCommandFailed("The music isn't even started yet!!!");
+                        main.getBot().sendCommandFailed("The music isn't even started yet!!!");
                     }
                 }
             } else if(cmd[0].equals("ping")) {
                 if(cmd.length == 1) {
-                    sendMessage("Pong!");
+                    main.getBot().sendMessage("Pong!");
                 }
             } else if(cmd[0].equals("bot")) {
                 if(cmd[1].equals("restart")) {
                     if(cmd.length == 2) {
-                        sendCommandInProgress();
+                        main.getBot().sendCommandInProgress();
                         main.restart();
-                        sendCommandDone();
+                        main.getBot().sendCommandDone();
                     }
                 } else if(cmd[1].equals("shutdown")) {
                     if(cmd.length == 2) {
-                        if(!main.ready) {
-                            sendCommandFailed("I'm not done launching, wait!");
+                        if(!main.isReady()) {
+                            main.getBot().sendCommandFailed("I'm not done launching, wait!");
                         } else {
                             main.shutdown();
                         }
@@ -146,252 +138,252 @@ public class MessageListener implements IListener<MessageReceivedEvent> {
                     if(cmd.length == 2 && attachments.size() == 1) {
                         cmd = msg.split(" ", 3);
                         try {
-                            main.bot.client.changeAvatar(Image.forUrl("png", attachments.get(0).getUrl()));
-                            sendCommandDone();
+                            main.getBot().getClient().changeAvatar(Image.forUrl("png", attachments.get(0).getUrl()));
+                            main.getBot().sendCommandDone();
                         } catch(Exception e) {
                             e.printStackTrace();
-                            sendCommandFailed("Something went wrong, sorry!");
+                            main.getBot().sendCommandFailed("Something went wrong, sorry!");
                         }
                     }
                 } else if(cmd[1].equals("nick")) {
                     if(cmd.length > 1) {
                         cmd = msg.split(" ", 3);
                         try {
-                            main.bot.client.changeUsername(cmd[2]);
-                            sendCommandDone();
+                            main.getBot().getClient().changeUsername(cmd[2]);
+                            main.getBot().sendCommandDone();
                         } catch(Exception e) {
                             e.printStackTrace();
-                            sendCommandFailed("Something went wrong, sorry!");
+                            main.getBot().sendCommandFailed("Something went wrong, sorry!");
                         }
                     }
                 }
             } else if(cmd[0].equals("music")) {
                 if(cmd[1].equals("resume")) {
                     if(cmd.length == 2) {
-                        if(!main.ready) {
-                            sendCommandFailed("The music isn't even started yet!");
-                        } else if(main.ready && !main.musicPaused) {
-                            sendCommandFailed("The music isn't paused!");
-                        } else if(main.ready && main.musicPaused) {
-                            main.musicManager.scheduler.resume();
-                            sendCommandDone();
+                        if(!main.isReady()) {
+                            main.getBot().sendCommandFailed("The music isn't even started yet!");
+                        } else if(main.isReady() && !main.isMusicPaused()) {
+                            main.getBot().sendCommandFailed("The music isn't paused!");
+                        } else if(main.isReady() && main.isMusicPaused()) {
+                            main.getMusicManager().getScheduler().resume();
+                            main.getBot().sendCommandDone();
                         }
                     }
                 } else if(cmd[1].equals("pause")) {
                     if(cmd.length == 2) {
-                        if(!main.ready) {
-                            sendCommandFailed("The music isn't even started yet!");
-                        } else if(main.ready && main.musicPaused) {
-                            sendCommandFailed("The music is already paused!");
-                        } else if(main.musicManager.scheduler.getCurrentTrack() != null) {
-                            main.musicManager.scheduler.pause();
-                            sendCommandDone();
+                        if(!main.isReady()) {
+                            main.getBot().sendCommandFailed("The music isn't even started yet!");
+                        } else if(main.isReady() && main.isMusicPaused()) {
+                            main.getBot().sendCommandFailed("The music is already paused!");
+                        } else if(main.getMusicManager().getScheduler().getCurrentTrack() != null) {
+                            main.getMusicManager().getScheduler().pause();
+                            main.getBot().sendCommandDone();
                         } else {
-                            sendCommandFailed("No track is playing right now...");
+                            main.getBot().sendCommandFailed("No track is playing right now...");
                         }
                     }
                 } else if(cmd[1].equals("stop")) {
                     if(cmd.length == 2) {
-                        main.musicManager.scheduler.stop();
-                        sendCommandDone();
+                        main.getMusicManager().getScheduler().stop();
+                        main.getBot().sendCommandDone();
                     }
                 } else if(cmd[1].equals("play")) {
                     if(cmd.length == 2) {
-                        if(!main.ready) {
-                            sendCommandFailed("The music isn't even started yet!");
+                        if(!main.isReady()) {
+                            main.getBot().sendCommandFailed("The music isn't even started yet!");
                         } else {
-                            main.musicManager.scheduler.playRandomTrack();
-                            sendCommandDone();
+                            main.getMusicManager().getScheduler().playRandomTrack();
+                            main.getBot().sendCommandDone();
                         }
                     } else if(cmd.length == 3) {
-                        if(!main.ready) {
-                            sendCommandFailed("The music isn't even started yet!");
+                        if(!main.isReady()) {
+                            main.getBot().sendCommandFailed("The music isn't even started yet!");
                         } else {
                             try {
                                 int index = Integer.parseInt(cmd[2]);
-                                if(index >= main.musicManager.scheduler.queue.size()) {
-                                    sendCommandFailed("ID is too big");
+                                if(index >= main.getMusicManager().getScheduler().queue.size()) {
+                                    main.getBot().sendCommandFailed("ID is too big");
                                 } else if(index < 0) {
-                                    sendCommandFailed("ID is too small");
+                                    main.getBot().sendCommandFailed("ID is too small");
                                 } else {
-                                    boolean trackPlayed = main.musicManager.scheduler.play
-                                                          (main.musicManager.scheduler.queue.get(index));
+                                    boolean trackPlayed = main.getMusicManager().getScheduler().play
+                                                          (main.getMusicManager().getScheduler().queue.get(index));
                                     if(!trackPlayed) {
-                                        sendCommandFailed("Track with this ID doesn't exist");
+                                        main.getBot().sendCommandFailed("Track with this ID doesn't exist");
                                     } else {
-                                        sendCommandDone();
+                                        main.getBot().sendCommandDone();
                                     }
                                 }
                             } catch(NumberFormatException ex) {
-                                sendCommandFailed("ID isn't an integer");
+                                main.getBot().sendCommandFailed("ID isn't an integer");
                             } catch(Exception ex) {
-                                sendCommandFailed("Unexpected error");
+                                main.getBot().sendCommandFailed("Unexpected error");
                                 ex.printStackTrace();
                             }
                         }
                     }
                 } else if(cmd[1].equals("leave")) {
                     if(cmd.length == 2) {
-                        sendMessage("Leaving the voice channel, wait!");
-                        main.musicManager.scheduler.leaveMusicChannel();
-                        sendCommandDone();
+                        main.getBot().sendMessage("Leaving the voice channel, wait!");
+                        main.getMusicManager().getScheduler().leaveMusicChannel();
+                        main.getBot().sendCommandDone();
                     }
                 } else if(cmd[1].equals("join")) {
                     if(cmd.length == 2) {
-                        sendMessage("Attempting to join the voice channel, wait!");
+                        main.getBot().sendMessage("Attempting to join the voice channel, wait!");
                         try {
-                            main.musicManager.scheduler.joinMusicChannel();
+                            main.getMusicManager().getScheduler().joinMusicChannel();
                         } catch(MissingPermissionsException ex) {
-                            sendCommandFailed("Something went wrong!");
+                            main.getBot().sendCommandFailed("Something went wrong!");
                             ex.printStackTrace();
                             return;
                         }
-                        sendCommandDone();
+                        main.getBot().sendCommandDone();
                     }
                 } else if(cmd[1].equals("rejoin")) {
                     if(cmd.length == 2) {
-                        sendMessage("Attempting to rejoin to voice channel, wait!");
+                        main.getBot().sendMessage("Attempting to rejoin to voice channel, wait!");
                         try {
-                            main.musicManager.scheduler.rejoinMusicChannel();
+                            main.getMusicManager().getScheduler().rejoinMusicChannel();
                         } catch(Exception ex) {
-                            sendCommandFailed("Something went wrong!");
+                            main.getBot().sendCommandFailed("Something went wrong!");
                             ex.printStackTrace();
                             return;
                         }
-                        sendCommandDone();
+                        main.getBot().sendCommandDone();
                     }
                 } else if(cmd[1].equals("replay")) {
                     if(cmd.length == 2) {
-                        if(main.musicManager.scheduler.getCurrentTrack() != null) {
-                            main.musicManager.scheduler.setTrackTime(0);
-                            sendCommandDone();
+                        if(main.getMusicManager().getScheduler().getCurrentTrack() != null) {
+                            main.getMusicManager().getScheduler().setTrackTime(0);
+                            main.getBot().sendCommandDone();
                         } else {
-                            sendCommandFailed("No track is playing right now...");
+                            main.getBot().sendCommandFailed("No track is playing right now...");
                         }
                     }
                 } else if(cmd[1].equals("next")) {
                     if(cmd.length == 2) {
-                        if(!main.ready) {
-                            sendCommandFailed("The music isn't even started yet!");
+                        if(!main.isReady()) {
+                            main.getBot().sendCommandFailed("The music isn't even started yet!");
                         } else {
-                            main.musicManager.scheduler.nextTrack();
-                            sendCommandDone();
+                            main.getMusicManager().getScheduler().nextTrack();
+                            main.getBot().sendCommandDone();
                         }
                     }
                 } else if(cmd[1].equals("previous")) {
                     if(cmd.length == 2) {
-                        if(!main.ready) {
-                            sendCommandFailed("The music isn't even started yet!");
+                        if(!main.isReady()) {
+                            main.getBot().sendCommandFailed("The music isn't even started yet!");
                         } else {
-                            main.musicManager.scheduler.previousTrack();
-                            sendCommandDone();
+                            main.getMusicManager().getScheduler().previousTrack();
+                            main.getBot().sendCommandDone();
                         }
                     }
                 } else if(cmd[1].equals("shuffle")) {
                     if(cmd.length == 2) {
-                        if(!main.ready) {
-                            sendCommandFailed("The music isn't even started yet!");
+                        if(!main.isReady()) {
+                            main.getBot().sendCommandFailed("The music isn't even started yet!");
                         } else {
-                            main.musicManager.scheduler.shufflePlaylist();
-                            sendCommandDone();
+                            main.getMusicManager().getScheduler().shufflePlaylist();
+                            main.getBot().sendCommandDone();
                         }
                     }
                 } else if(cmd[1].equals("sort")) {
                     if(cmd.length == 2) {
-                        if(!main.ready) {
-                            sendCommandFailed("The music isn't even started yet!");
+                        if(!main.isReady()) {
+                            main.getBot().sendCommandFailed("The music isn't even started yet!");
                         } else {
-                            main.musicManager.scheduler.sortPlaylist();
-                            sendCommandDone();
+                            main.getMusicManager().getScheduler().sortPlaylist();
+                            main.getBot().sendCommandDone();
                         }
                     }
                 } else if(cmd[1].equals("loop")) {
                     if(cmd.length == 3) {
                         if(cmd[2].equals("true")) {
-                            main.musicManager.scheduler.looping = true;
-                            sendCommandDone();
+                            main.getMusicManager().getScheduler().looping = true;
+                            main.getBot().sendCommandDone();
                         } else if(cmd[2].equals("false")) {
-                            main.musicManager.scheduler.looping = false;
-                            sendCommandDone();
+                            main.getMusicManager().getScheduler().looping = false;
+                            main.getBot().sendCommandDone();
                         } else {
-                            sendCommandFailed("Argument isn't \"true\" nor \"false\"");
+                            main.getBot().sendCommandFailed("Argument isn't \"true\" nor \"false\"");
                         }
                     }
                 } else if(cmd[1].equals("wind")) {
                     if(cmd.length == 3) {
-                        if(!main.ready) {
-                            sendCommandFailed("The music isn't even started yet!");
-                        } else if(main.ready && main.musicPaused) {
-                            sendCommandFailed("The music is paused!");
+                        if(!main.isReady()) {
+                            main.getBot().sendCommandFailed("The music isn't even started yet!");
+                        } else if(main.isReady() && main.isMusicPaused()) {
+                            main.getBot().sendCommandFailed("The music is paused!");
                         } else {
                             try {
                                 int time = Integer.parseInt(cmd[2]);
-                                int duration = (int)(main.musicManager.scheduler.getCurrentTrack().getDuration() / 1000);
+                                int duration = (int)(main.getMusicManager().getScheduler().getCurrentTrack().getDuration() / 1000);
                                 if(time > duration) {
-                                    sendCommandFailed("\"time\" is too big");
+                                    main.getBot().sendCommandFailed("\"time\" is too big");
                                 } else if(time < 0) {
-                                    sendCommandFailed("\"time\" is too small");
+                                    main.getBot().sendCommandFailed("\"time\" is too small");
                                 } else {
-                                    main.musicManager.scheduler.setTrackTime(time);
-                                    sendCommandDone();
+                                    main.getMusicManager().getScheduler().setTrackTime(time);
+                                    main.getBot().sendCommandDone();
                                 }
                             } catch(NumberFormatException ex) {
-                                sendCommandFailed("\"time\" isn't an integer");
+                                main.getBot().sendCommandFailed("\"time\" isn't an integer");
                             } catch(Exception ex) {
-                                sendCommandFailed("Unexpected error");
+                                main.getBot().sendCommandFailed("Unexpected error");
                             }
                         }
                     }
                 } else if(cmd[1].equals("volume")) {
                     if(cmd.length == 3) {
-                        if(!main.ready) {
-                            sendCommandFailed("The music isn't even started yet!");
+                        if(!main.isReady()) {
+                            main.getBot().sendCommandFailed("The music isn't even started yet!");
                         } else {
                             try {
                                 int volume = Integer.parseInt(cmd[2]);
                                 if(volume > 100) {
-                                    sendCommandFailed("\"vol\" is too big");
+                                    main.getBot().sendCommandFailed("\"vol\" is too big");
                                 } else if(volume < 0) {
-                                    sendCommandFailed("\"vol\" is too small");
+                                    main.getBot().sendCommandFailed("\"vol\" is too small");
                                 } else {
-                                    main.musicManager.scheduler.setVolume(volume);
-                                    sendCommandDone();
+                                    main.getMusicManager().getScheduler().setVolume(volume);
+                                    main.getBot().sendCommandDone();
                                 }
                             } catch(NumberFormatException ex) {
-                                sendCommandFailed("\"vol\" isn't an integer");
+                                main.getBot().sendCommandFailed("\"vol\" isn't an integer");
                             } catch(Exception ex) {
-                                sendCommandFailed("Unexpected error");
+                                main.getBot().sendCommandFailed("Unexpected error");
                             }
                         }
                     }
                 } else if(cmd[1].equals("queue")) {
                     if(cmd.length > 2) {
-                        boolean queueWasEmpty = main.musicManager.scheduler.queue.isEmpty();
+                        boolean queueWasEmpty = main.getMusicManager().getScheduler().queue.isEmpty();
                         int tracksLoaded = 0;
                         
                         cmd = msgL.split(" ", 3);
                         
-                        for(File file : main.music) {
+                        for(File file : main.getMusic()) {
                             if(file.getAbsolutePath().toLowerCase().contains(cmd[2])) {
-                                main.musicManager.scheduler.queue(file);
+                                main.getMusicManager().getScheduler().queue(file);
                                 tracksLoaded++;
                             }
                         }
 
                         if(tracksLoaded == 0) {
-                            sendMessage("I found no tracks with this name!");
+                            main.getBot().sendMessage("I found no tracks with this name!");
                         } else {
-                            sendMessage("Queued " + tracksLoaded + " tracks");
+                            main.getBot().sendMessage("Queued " + tracksLoaded + " tracks");
                         }
                         
-                        if(queueWasEmpty && !main.musicManager.scheduler.queue.isEmpty()) {
-                            main.musicManager.scheduler.play(main.musicManager.scheduler.queue.get(0));
+                        if(queueWasEmpty && !main.getMusicManager().getScheduler().queue.isEmpty()) {
+                            main.getMusicManager().getScheduler().play(main.getMusicManager().getScheduler().queue.get(0));
                         }
                     }
                 } else if(cmd[1].equals("clear")) {
                     if(cmd.length == 2) {
-                        main.musicManager.scheduler.clearQueue();
-                        sendCommandDone();
+                        main.getMusicManager().getScheduler().clearQueue();
+                        main.getBot().sendCommandDone();
                     }
                 }
             } else if(cmd[0].equals("files")) {
@@ -416,8 +408,8 @@ public class MessageListener implements IListener<MessageReceivedEvent> {
         String msg = e.getMessage().getContent();
         String userName = user.getName();
 
-        if(chan.getID().equals(main.MAIN_CHANNEL_ID)) {
-            if(msg.startsWith(main.COMMAND_SYMBOL) && !user.isBot()) {
+        if(chan.getID().equals(main.getMainChannelID())) {
+            if(msg.startsWith(main.getCommandSymbol()) && !user.isBot()) {
                 try {
                     command(chan, user, msg, userName, e.getMessage().getAttachments());
                 } catch(FileNotFoundException ex) {
