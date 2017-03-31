@@ -60,7 +60,7 @@ public class TrackScheduler extends AudioEventAdapter {
             trackName = "nothing";
         } else {
             if(main.musicPaused || player.isPaused()) {
-                trackName = "(PAUSED) ";
+                trackName = String.valueOf('\u25ae') + String.valueOf('\u25ae') + " ";
             }
             trackName += getTrackName(currentTrack);
         }
@@ -289,16 +289,19 @@ public class TrackScheduler extends AudioEventAdapter {
         }
 
         String msg = getTrackInfo(getCurrentTrack()) + "\n\nTrack progress:\n";
+        
         for(int a = 0; a < per; a++) {
-            msg += "#";
+            msg += String.valueOf('\u25a0');
         }
-
+        
         if(per * scale == 0) {
             msg += "1%";
         } else {
             msg += " " + (per * scale) + "%";
         }
 
+        msg += " (" + pos + " seconds)";
+        
         try {
             if(main.progress != null) {
                 main.progress.edit(msg);
