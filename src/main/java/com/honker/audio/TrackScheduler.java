@@ -269,19 +269,19 @@ public class TrackScheduler extends AudioEventAdapter {
             return;
         }
 
-        int scale = 5;
-        int max = 20;
-        int dur = (int)currentTrack.getDuration() / 1000;
-        int pos = (int)currentTrack.getPosition() / 1000;
-        int per = 0;
-        for(int a = 1; a < max; a++) {
-            if(pos >= dur - scale * 2) {
+        float scale = 5;
+        float max = 20;
+        float dur = currentTrack.getDuration() / 1000;
+        float pos = currentTrack.getPosition() / 1000;
+        float per = 0;
+        for(int a = 1; a < max + 1; a++) {
+            if(pos >= dur - scale) {
                 per = max;
                 break;
             }
 
-            int dur1 = (int)(dur / max * a);
-            int dur2 = (int)(dur / max * (a + 1));
+            float dur1 = dur / max * a;
+            float dur2 = dur / max * (a + 1);
             if(pos >= dur1 && pos <= dur2) {
                 per = a;
                 break;
