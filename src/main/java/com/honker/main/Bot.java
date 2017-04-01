@@ -1,10 +1,14 @@
 package com.honker.main;
 
 import com.honker.listeners.MessageListener;
+
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
+
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
+
 import sx.blah.discord.api.ClientBuilder;
 import sx.blah.discord.api.IDiscordClient;
 import sx.blah.discord.handle.obj.IMessage;
@@ -171,6 +175,7 @@ public class Bot {
             msg = main.getMainChannel().sendMessage(main.getMusicManager().getScheduler().getTrackInfo(
                     main.getMusicManager().getScheduler().getCurrentTrack()) + "\n\nTrack progress:");
             main.setProgress(msg);
+            main.getMusicManager().getScheduler().updateStatus();
         } catch(Exception e) {
             e.printStackTrace();
             main.setProgress(null);
@@ -178,10 +183,9 @@ public class Bot {
         }
 
         main.getMusicManager().getScheduler().updateTrack();
-        main.getMusicManager().getScheduler().updateStatus();
     }
     
-    public Bot() {
+    public Bot() throws FileNotFoundException {
         ClientBuilder builder = new ClientBuilder();
         builder.withToken(main.getBotToken());
         try {

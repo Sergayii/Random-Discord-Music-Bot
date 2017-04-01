@@ -1,14 +1,17 @@
 package com.honker.listeners;
 
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+
 import java.util.ArrayList;
 import java.util.List;
+
 import sx.blah.discord.api.events.IListener;
 import sx.blah.discord.handle.impl.events.MessageReceivedEvent;
 import sx.blah.discord.handle.obj.IChannel;
@@ -22,9 +25,9 @@ import static com.honker.main.Main.main;
 public class MessageListener implements IListener<MessageReceivedEvent> {
 
     public void command(IChannel chan, IUser user, String msg, String userName, List<Attachment> attachments) throws FileNotFoundException {
-        if(msg.length() > main.getCommandSymbol().length()) {
+        if(msg.length() > main.COMMAND_SYMBOL.length()) {
             chan.setTypingStatus(true);
-            msg = msg.substring(main.getCommandSymbol().length());
+            msg = msg.substring(main.COMMAND_SYMBOL.length());
             while(msg.contains("  ")) {
                 msg = msg.replace("  ", " ");
             }
@@ -38,7 +41,7 @@ public class MessageListener implements IListener<MessageReceivedEvent> {
                 }
             } else if(cmd[0].equals("track")) {
                 if(cmd.length == 1) {
-                    if(!main.isReady()) {
+                    if(!main.getBot().getClient().isReady()) {
                         main.getBot().sendCommandFailed("The music isn't even started yet!!!");
                     } else {
                         main.getMusicManager().getScheduler().sendCurrentPlayingTrack();
@@ -46,7 +49,7 @@ public class MessageListener implements IListener<MessageReceivedEvent> {
                 }
             } else if(cmd[0].equals("playlist")) {
                 if(cmd.length == 1) {
-                    if(!main.isReady()) {
+                    if(!main.getBot().getClient().isReady()) {
                         main.getBot().sendCommandFailed("The music isn't even started yet!!!");
                     } else {
                         main.getBot().sendTracksList();
@@ -54,7 +57,7 @@ public class MessageListener implements IListener<MessageReceivedEvent> {
                 }
             } else if(cmd[0].equals("search")) {
                 if(cmd.length > 1) {
-                    if(main.isReady()) {
+                    if(main.getBot().getClient().isReady()) {
                         cmd = msgL.split(" ", 2);
 
                         ArrayList<File> results = new ArrayList<File>();
@@ -128,7 +131,7 @@ public class MessageListener implements IListener<MessageReceivedEvent> {
                     }
                 } else if(cmd[1].equals("shutdown")) {
                     if(cmd.length == 2) {
-                        if(!main.isReady()) {
+                        if(!main.getBot().getClient().isReady()) {
                             main.getBot().sendCommandFailed("I'm not done launching, wait!");
                         } else {
                             main.shutdown();
@@ -160,20 +163,20 @@ public class MessageListener implements IListener<MessageReceivedEvent> {
             } else if(cmd[0].equals("music")) {
                 if(cmd[1].equals("resume")) {
                     if(cmd.length == 2) {
-                        if(!main.isReady()) {
+                        if(!main.getBot().getClient().isReady()) {
                             main.getBot().sendCommandFailed("The music isn't even started yet!");
-                        } else if(main.isReady() && !main.isMusicPaused()) {
+                        } else if(main.getBot().getClient().isReady() && !main.getMusicManager().getPlayer().isPaused()) {
                             main.getBot().sendCommandFailed("The music isn't paused!");
-                        } else if(main.isReady() && main.isMusicPaused()) {
+                        } else if(main.getBot().getClient().isReady() && main.getMusicManager().getPlayer().isPaused()) {
                             main.getMusicManager().getScheduler().resume();
                             main.getBot().sendCommandDone();
                         }
                     }
                 } else if(cmd[1].equals("pause")) {
                     if(cmd.length == 2) {
-                        if(!main.isReady()) {
+                        if(!main.getBot().getClient().isReady()) {
                             main.getBot().sendCommandFailed("The music isn't even started yet!");
-                        } else if(main.isReady() && main.isMusicPaused()) {
+                        } else if(main.getBot().getClient().isReady() && main.getMusicManager().getPlayer().isPaused()) {
                             main.getBot().sendCommandFailed("The music is already paused!");
                         } else if(main.getMusicManager().getScheduler().getCurrentTrack() != null) {
                             main.getMusicManager().getScheduler().pause();
@@ -189,14 +192,14 @@ public class MessageListener implements IListener<MessageReceivedEvent> {
                     }
                 } else if(cmd[1].equals("play")) {
                     if(cmd.length == 2) {
-                        if(!main.isReady()) {
+                        if(!main.getBot().getClient().isReady()) {
                             main.getBot().sendCommandFailed("The music isn't even started yet!");
                         } else {
                             main.getMusicManager().getScheduler().playRandomTrack();
                             main.getBot().sendCommandDone();
                         }
                     } else if(cmd.length == 3) {
-                        if(!main.isReady()) {
+                        if(!main.getBot().getClient().isReady()) {
                             main.getBot().sendCommandFailed("The music isn't even started yet!");
                         } else {
                             try {
@@ -263,7 +266,7 @@ public class MessageListener implements IListener<MessageReceivedEvent> {
                     }
                 } else if(cmd[1].equals("next")) {
                     if(cmd.length == 2) {
-                        if(!main.isReady()) {
+                        if(!main.getBot().getClient().isReady()) {
                             main.getBot().sendCommandFailed("The music isn't even started yet!");
                         } else {
                             main.getMusicManager().getScheduler().nextTrack();
@@ -272,7 +275,7 @@ public class MessageListener implements IListener<MessageReceivedEvent> {
                     }
                 } else if(cmd[1].equals("previous")) {
                     if(cmd.length == 2) {
-                        if(!main.isReady()) {
+                        if(!main.getBot().getClient().isReady()) {
                             main.getBot().sendCommandFailed("The music isn't even started yet!");
                         } else {
                             main.getMusicManager().getScheduler().previousTrack();
@@ -281,7 +284,7 @@ public class MessageListener implements IListener<MessageReceivedEvent> {
                     }
                 } else if(cmd[1].equals("shuffle")) {
                     if(cmd.length == 2) {
-                        if(!main.isReady()) {
+                        if(!main.getBot().getClient().isReady()) {
                             main.getBot().sendCommandFailed("The music isn't even started yet!");
                         } else {
                             main.getMusicManager().getScheduler().shufflePlaylist();
@@ -290,7 +293,7 @@ public class MessageListener implements IListener<MessageReceivedEvent> {
                     }
                 } else if(cmd[1].equals("sort")) {
                     if(cmd.length == 2) {
-                        if(!main.isReady()) {
+                        if(!main.getBot().getClient().isReady()) {
                             main.getBot().sendCommandFailed("The music isn't even started yet!");
                         } else {
                             main.getMusicManager().getScheduler().sortPlaylist();
@@ -311,9 +314,9 @@ public class MessageListener implements IListener<MessageReceivedEvent> {
                     }
                 } else if(cmd[1].equals("wind")) {
                     if(cmd.length == 3) {
-                        if(!main.isReady()) {
+                        if(!main.getBot().getClient().isReady()) {
                             main.getBot().sendCommandFailed("The music isn't even started yet!");
-                        } else if(main.isReady() && main.isMusicPaused()) {
+                        } else if(main.getBot().getClient().isReady() && main.getMusicManager().getPlayer().isPaused()) {
                             main.getBot().sendCommandFailed("The music is paused!");
                         } else {
                             try {
@@ -336,7 +339,7 @@ public class MessageListener implements IListener<MessageReceivedEvent> {
                     }
                 } else if(cmd[1].equals("volume")) {
                     if(cmd.length == 3) {
-                        if(!main.isReady()) {
+                        if(!main.getBot().getClient().isReady()) {
                             main.getBot().sendCommandFailed("The music isn't even started yet!");
                         } else {
                             try {
@@ -409,7 +412,7 @@ public class MessageListener implements IListener<MessageReceivedEvent> {
         String userName = user.getName();
 
         if(chan.getID().equals(main.getMainChannelID())) {
-            if(msg.startsWith(main.getCommandSymbol()) && !user.isBot()) {
+            if(msg.startsWith(main.COMMAND_SYMBOL) && !user.isBot()) {
                 try {
                     command(chan, user, msg, userName, e.getMessage().getAttachments());
                 } catch(FileNotFoundException ex) {

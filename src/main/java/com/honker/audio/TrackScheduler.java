@@ -1,22 +1,25 @@
 package com.honker.audio;
 
-import static com.honker.main.Main.main;
-
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.player.event.AudioEventAdapter;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason;
+
 import java.util.ArrayList;
 import java.util.Random;
 
 import java.io.File;
+
 import java.util.Collections;
 import java.util.HashSet;
+
 import sx.blah.discord.handle.obj.IVoiceChannel;
 import sx.blah.discord.handle.obj.Status;
 import sx.blah.discord.util.DiscordException;
 import sx.blah.discord.util.MissingPermissionsException;
 import sx.blah.discord.util.RateLimitException;
+
+import static com.honker.main.Main.main;
 
 public class TrackScheduler extends AudioEventAdapter {
 
@@ -33,20 +36,17 @@ public class TrackScheduler extends AudioEventAdapter {
 
     public void resume() {
         player.setPaused(false);
-        main.setMusicPaused(false);
         updateStatus();
     }
     
     public void pause() {
         player.setPaused(true);
-        main.setMusicPaused(true);
         updateStatus();
     }
 
     public void stop() {
         player.stopTrack();
         currentTrack = null;
-        main.setMusicPaused(true);
         updateStatus();
     }
 
@@ -55,7 +55,7 @@ public class TrackScheduler extends AudioEventAdapter {
         if(currentTrack == null || queue.isEmpty()) {
             trackName = "nothing";
         } else {
-            if(main.isMusicPaused() || player.isPaused()) {
+            if(player.isPaused()) {
                 trackName = "\u25ae\u25ae ";
             }
             trackName += getTrackName(currentTrack);
@@ -261,7 +261,7 @@ public class TrackScheduler extends AudioEventAdapter {
     }
 
     public void updateTrack() {
-        if(!main.isReady() || main.isMusicPaused() || main.getProgress() == null || currentTrack == null) {
+        if(!main.getBot().getClient().isReady() || main.getProgress() == null || currentTrack == null) {
             return;
         }
 
@@ -298,12 +298,12 @@ public class TrackScheduler extends AudioEventAdapter {
 
         msg += " (" + pos + " seconds)";
         
-        try {
-            if(main.getProgress() != null) {
+        if(main.getProgress() != null) {
+            try {
                 main.getProgress().edit(msg);
+            } catch(Exception ex) {
+                ex.printStackTrace();
             }
-        } catch(Exception ex) {
-            ex.printStackTrace();
         }
     }
     
