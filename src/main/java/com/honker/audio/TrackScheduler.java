@@ -107,6 +107,10 @@ public class TrackScheduler extends AudioEventAdapter {
         return bool;
     }
 
+    public int getVolume() {
+        return player.getVolume();
+    }
+    
     public void setVolume(int volume) {
         player.setVolume(volume);
     }
@@ -125,6 +129,39 @@ public class TrackScheduler extends AudioEventAdapter {
         return null;
     }
 
+    public float getTrackPosition(AudioTrack track) {
+        return track.getPosition() / 1000;
+    }
+    
+    public String getTrackDurationString(AudioTrack track) {
+        float duration = getTrackDuration(track), seconds = duration, minutes, hours;
+        minutes = duration / 60;
+        hours = duration / 3600;
+        if(hours < 1) {
+            minutes = (float)Math.floor(minutes);
+            for(int a = 0; a < minutes; a++) {
+                seconds -= 60;
+            }
+            return (int)minutes + " minutes " + (int)seconds + " seconds";
+        } else if(minutes < 1) {
+            return (int)seconds + " seconds";
+        }
+        
+        hours = (float)Math.floor(hours);
+        minutes = (float)Math.floor(minutes);
+        for(int a = 0; a < hours; a++) {
+            minutes -= 60;
+        }
+        for(int a = 0; a < minutes; a++) {
+            seconds -= 60;
+        }
+        return (int)hours + " hours " + (int)minutes + " minutes " + (int)seconds + " seconds";
+    }
+    
+    public float getTrackDuration(AudioTrack track) {
+        return track.getDuration() / 1000;
+    }
+    
     public String getShortenedTrackInfo(AudioTrack track) {
         String trackName = getTrackName(track);
         return "Track name: " + trackName + "; ID: " + getTrackID(track.makeClone());
@@ -134,7 +171,8 @@ public class TrackScheduler extends AudioEventAdapter {
         String trackName = getTrackName(track);
         return "Track name: " + trackName + System.lineSeparator() +
                "File path: `" + track.getIdentifier().replaceFirst("/", "").replace("\\", "/") + "`" + System.lineSeparator() +
-               "Duration: " + (track.getDuration() / 1000) + " seconds" + System.lineSeparator() +
+               "Duration: " + getTrackDurationString(track) + " (" + (int)getTrackDuration(track) + " seconds)" +System.lineSeparator() +
+               "Volume: " + getVolume() + "%" + System.lineSeparator() +
                "ID: " + getTrackID(track);
     }
 
@@ -265,10 +303,12 @@ public class TrackScheduler extends AudioEventAdapter {
             return;
         }
 
+        // scale * max must always be equal to 100
         float scale = 5;
         float max = 20;
-        float dur = currentTrack.getDuration() / 1000;
-        float pos = currentTrack.getPosition() / 1000;
+        
+        float dur = getTrackDuration(currentTrack);
+        float pos = getTrackPosition(currentTrack);
         float per = 0;
         for(int a = 1; a < max + 1; a++) {
             if(pos >= dur - scale) {
