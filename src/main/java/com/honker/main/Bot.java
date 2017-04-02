@@ -155,6 +155,7 @@ public class Bot {
                     + "\tloop <true/false> - changes looping a single track\n"
                     + "\tqueue <track> - add a track to the playlist\n"
                     + "!files <command> [value] - used for controlling files\n"
+                    + "\tlist - sends files list\n"
                     + "\tunload - unloads all the files\n"
                     + "\treload - reloads all the files\n"
                     + "```"

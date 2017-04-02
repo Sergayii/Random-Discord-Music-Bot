@@ -2,12 +2,10 @@ package com.honker.listeners;
 
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +25,7 @@ public class MessageListener implements IListener<MessageReceivedEvent> {
     public void command(IChannel chan, IUser user, String msg, String userName, List<Attachment> attachments) throws FileNotFoundException {
         if(msg.length() > main.COMMAND_SYMBOL.length()) {
             chan.setTypingStatus(true);
+            
             msg = msg.substring(main.COMMAND_SYMBOL.length());
             while(msg.contains("  ")) {
                 msg = msg.replace("  ", " ");
@@ -82,7 +81,7 @@ public class MessageListener implements IListener<MessageReceivedEvent> {
                         }
 
                         if(!answer.equals("")) {
-                            if(answer.length() <= 1900) {
+                            if(answer.length() <= 1000) {
                                 main.getBot().sendMessage("This is what i've found:\n" + answer);
                             } else {
                                 File file;
@@ -94,15 +93,10 @@ public class MessageListener implements IListener<MessageReceivedEvent> {
                                 }
 
                                 if(file != null) {
-                                    BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file)));
+                                    PrintWriter writer = new PrintWriter(file);
 
-                                    try {
-                                        writer.write(answer.replace("```", ""));
-                                        writer.newLine();
-                                        writer.flush();
-                                    } catch(IOException e) {
-                                        file = null;
-                                    }
+                                    writer.print(answer.replace("```", "") + System.lineSeparator());
+                                    writer.flush();
 
                                     if(file != null) {
                                         main.getBot().sendFile("There's just too much tracks, i'll send them in a file", file);
@@ -363,9 +357,8 @@ public class MessageListener implements IListener<MessageReceivedEvent> {
                     if(cmd.length > 2) {
                         boolean queueWasEmpty = main.getMusicManager().getScheduler().queue.isEmpty();
                         int tracksLoaded = 0;
-                        
                         cmd = msgL.split(" ", 3);
-                        
+
                         for(File file : main.getMusic()) {
                             if(file.getAbsolutePath().toLowerCase().contains(cmd[2])) {
                                 main.getMusicManager().getScheduler().queue(file);
@@ -393,10 +386,38 @@ public class MessageListener implements IListener<MessageReceivedEvent> {
                 if(cmd[1].equals("reload")) {
                     if(cmd.length == 2) {
                         main.reloadMusic();
+                        main.getBot().sendCommandDone();
                     }
                 } else if(cmd[1].equals("unload")) {
                     if(cmd.length == 2) {
                         main.unloadMusic();
+                        main.getBot().sendCommandDone();
+                    }
+                } else if(cmd[1].equals("list")) {
+                    if(cmd.length == 2) {
+                        String answer = "";
+                        for(File file : main.getMusic()) {
+                            answer += file.getAbsolutePath() + System.lineSeparator();
+                        }
+                        
+                        if(answer.length() < 1000) {
+                            main.getBot().sendMessage("Files list:\n" + answer);
+                        } else {
+                            File file;
+                            try {
+                                file = File.createTempFile("filesList", ".txt");
+                            } catch(IOException ex) {
+                                file = null;
+                                main.getBot().sendCommandFailed("Something broke, and i can't send the result");
+                                return;
+                            }
+                            
+                            PrintWriter writer = new PrintWriter(file);
+                            writer.print(answer);
+                            writer.flush();
+                            
+                            main.getBot().sendFile("The files list is too big, i'll send it in this file", file);
+                        }
                     }
                 }
             }

@@ -167,6 +167,7 @@ public class Main {
         try {
             filesToLoad = Files.walk(new File(getMusicPath()).toPath()).filter(path -> Files.isRegularFile(path) && !music.contains(path.toFile())).map(path -> path.toFile().toString()).collect(Collectors.toList());
         } catch(IOException ex) {
+            bot.sendMessage("Failed to load music");
             ex.printStackTrace();
             filesToLoad = null;
         }
@@ -184,7 +185,7 @@ public class Main {
             ArrayList<File> loadedFiles = new ArrayList<File>();
 
             for(AudioTrack track : getMusicManager().getScheduler().queue) {
-                loadedFiles.add(new File(filesToLoad.get(getMusicManager().getScheduler().queue.indexOf(track))));
+                loadedFiles.add(new File(track.getIdentifier()));
             }
 
             setMusic(loadedFiles);
@@ -226,23 +227,23 @@ public class Main {
 
     public void load(String trackUrl) {
         getPlayerManager().loadItem(trackUrl, new AudioLoadResultHandler() {
-
-           @Override
-           public void trackLoaded(AudioTrack track) {
+            
+            @Override
+            public void trackLoaded(AudioTrack track) {
                 getMusicManager().getScheduler().queue(track);
-           }
+            }
 
-           @Override
-           public void playlistLoaded(AudioPlaylist playlist) {}
+            @Override
+            public void playlistLoaded(AudioPlaylist playlist) {}
 
-           @Override
-           public void noMatches() {}
+            @Override
+            public void noMatches() {}
 
-           @Override
-           public void loadFailed(FriendlyException ex) {
-               ex.printStackTrace();
-           }
-       });
+            @Override
+            public void loadFailed(FriendlyException ex) {
+                ex.printStackTrace();
+            }
+        });
     }
 
     public void shutdown() {
